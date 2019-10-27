@@ -80,12 +80,12 @@ let compile_c_file sourcename ifile ofile =
         fatal_error loc "%a"  print_error msg in
   (* Dump Asm in binary and JSON format *)
   (* insert code here *)
-  let memory = Mem.empty in
+  let memory = Genv.init_mem asm in
   let ge = Genv.globalenv asm in
   (* Pregmap.init initializes the register map *)
   (* extraction/Maps.ml line 384 EMap module *)
-  let regset = Pregmap.init in
-  let pc_init = Genv.symbol_address ge p.(prog_main) Ptrofs.zero in
+  let regset = Pregmap.init Vundef in
+  let pc_init = Genv.symbol_address ge asm.prog_main Ptrofs.zero in
   let regset = Pregmap.set regset PC pc_init in
   
         # RA <- Vnullptr
