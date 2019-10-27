@@ -86,11 +86,11 @@ let compile_c_file sourcename ifile ofile =
   (* extraction/Maps.ml line 384 EMap module *)
   let regset = Pregmap.init Vundef in
   let pc_init = Genv.symbol_address ge asm.prog_main Ptrofs.zero in
-  let regset = Pregmap.set regset PC pc_init in
-  
-        # RA <- Vnullptr
-        # RSP <- Vnullptr in
-      initial_state p (State rs0 m0).
+  let regset = Pregmap.set PC pc_init regset in
+  let regset = Pregmap.set RA Vnullptr regset in
+  let regset = Pregmap.set RSP Vnullptr regset in
+
+  (*initial_state p (State rs0 m0).*)
 
 
 
