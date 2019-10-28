@@ -82,20 +82,28 @@ let compile_c_file sourcename ifile ofile =
   (* insert code here *)
   (* Optional monad type, match with None/Maybe to extract Mem.mem.mem *)
   let memory = Genv.init_mem asm in
-  match Genv.init_mem asm with
-    | None -> exit
-    | Some memory -> 
+  (* match Genv.init_mem asm with
+    | None -> None
+    | Some memory ->  *)
   let ge = Genv.globalenv asm in
   (* Pregmap.init initializes the register map *)
   (* extraction/Maps.ml line 384 EMap module *)
   let regset = Pregmap.init Vundef in
   let pc_init = Genv.symbol_address ge asm.prog_main Ptrofs.zero in
   let regset = Pregmap.set PC pc_init regset in
-  let regset = Pregmap.set RA (Vptr (stk, Ptrofs.zero)) regset in
-  let regset = Pregmap.set RSP Vnullptr regset in
+  (* 
+  let regset = Pregmap.set RA None regset in
+  let regset = Pregmap.set RSP Vnullptr regset in *)
 
   (*initial_state p (State rs0 m0).*)
 
+  (* let run ge asm rs m =
+    match Pregmap.get PC rs with
+      | Some Vptr(b, _) -> run ge asm Asm.exec_instr
+      | _ -> None (* final state *)
+  in
+
+  let result = run ge asm regset memory in *)
 
 
   AsmToJSON.print_if asm sourcename;
@@ -103,7 +111,6 @@ let compile_c_file sourcename ifile ofile =
   let oc = open_out ofile in
   PrintAsm.print_program oc asm;
   close_out oc
-
 (* From C source to asm *)
 
 let compile_i_file sourcename preproname =
