@@ -35,6 +35,185 @@ open Ctypes
 open Csyntax
 open Csem
 
+let print_instruction i = match i with
+| Pmov_rr (r1, r2) -> Printf.printf "Pmov_rr" ; ()
+| Pmovl_ri (r1, r2) -> Printf.printf "Pmovl_ri" ; ()
+| Pmovq_ri (r1, r2) -> Printf.printf "Pmovq_ri" ; ()
+| Pmov_rs (r1, r2) -> Printf.printf "Pmov_rs" ; ()
+| Pmovl_rm (r1, r2) -> Printf.printf "Pmovl_rm" ; ()
+| Pmovq_rm (r1, r2) -> Printf.printf "Pmovq_rm" ; ()
+| Pmovl_mr (r1, r2) -> Printf.printf "Pmovl_mr" ; ()
+| Pmovq_mr (r1, r2) -> Printf.printf "Pmovq_mr" ; ()
+| Pmovsd_ff (r1, r2) -> Printf.printf "Pmovsd_ff" ; ()
+| Pmovsd_fi (r1, r2) -> Printf.printf "Pmovsd_fi" ; ()
+| Pmovsd_fm (r1, r2) -> Printf.printf "Pmovsd_fm" ; ()
+| Pmovsd_mf (r1, r2) -> Printf.printf "Pmovsd_mf" ; ()
+| Pmovss_fi (r1, r2) -> Printf.printf "Pmovss_fi" ; ()
+| Pmovss_fm (r1, r2) -> Printf.printf "Pmovss_fm" ; ()
+| Pmovss_mf (r1, r2) -> Printf.printf "Pmovss_mf" ; ()
+| Pfldl_m r -> Printf.printf "Pfldl_m" ; ()
+| Pfstpl_m r -> Printf.printf "Pfstpl_m" ; ()
+| Pflds_m r -> Printf.printf "Pflds_m" ; ()
+| Pfstps_m r -> Printf.printf "Pfstps_m" ; ()
+| Pmovb_mr (r1, r2) -> Printf.printf "Pmovb_mr" ; ()
+| Pmovw_mr (r1, r2) -> Printf.printf "Pmovw_mr" ; ()
+| Pmovzb_rr (r1, r2) -> Printf.printf "Pmovzb_rr" ; ()
+| Pmovzb_rm (r1, r2) -> Printf.printf "Pmovzb_rm" ; ()
+| Pmovsb_rr (r1, r2) -> Printf.printf "Pmovsb_rr" ; ()
+| Pmovsb_rm (r1, r2) -> Printf.printf "Pmovsb_rm" ; ()
+| Pmovzw_rr (r1, r2) -> Printf.printf "Pmovzw_rr" ; ()
+| Pmovzw_rm (r1, r2) -> Printf.printf "Pmovzw_rm" ; ()
+| Pmovsw_rr (r1, r2) -> Printf.printf "Pmovsw_rr" ; ()
+| Pmovsw_rm (r1, r2) -> Printf.printf "Pmovsw_rm" ; ()
+| Pmovzl_rr (r1, r2) -> Printf.printf "Pmovzl_rr" ; ()
+| Pmovsl_rr (r1, r2) -> Printf.printf "Pmovsl_rr" ; ()
+| Pmovls_rr r -> Printf.printf "Pmovls_rr" ; ()
+| Pcvtsd2ss_ff (r1, r2) -> Printf.printf "Pcvtsd2ss_ff" ; ()
+| Pcvtss2sd_ff (r1, r2) -> Printf.printf "Pcvtss2sd_ff" ; ()
+| Pcvttsd2si_rf (r1, r2) -> Printf.printf "Pcvttsd2si_rf" ; ()
+| Pcvtsi2sd_fr (r1, r2) -> Printf.printf "Pcvtsi2sd_fr" ; ()
+| Pcvttss2si_rf (r1, r2) -> Printf.printf "Pcvttss2si_rf" ; ()
+| Pcvtsi2ss_fr (r1, r2) -> Printf.printf "Pcvtsi2ss_fr" ; ()
+| Pcvttsd2sl_rf (r1, r2) -> Printf.printf "Pcvttsd2sl_rf" ; ()
+| Pcvtsl2sd_fr (r1, r2) -> Printf.printf "Pcvtsl2sd_fr" ; ()
+| Pcvttss2sl_rf (r1, r2) -> Printf.printf "Pcvttss2sl_rf" ; ()
+| Pcvtsl2ss_fr (r1, r2) -> Printf.printf "Pcvtsl2ss_fr" ; ()
+| Pleal (r1, r2) -> Printf.printf "Pleal" ; ()
+| Pleaq (r1, r2) -> Printf.printf "Pleaq" ; ()
+| Pnegl r -> Printf.printf "Pnegl" ; ()
+| Pnegq r -> Printf.printf "Pnegq" ; ()
+| Paddl_ri (r1, r2) -> Printf.printf "Paddl_ri" ; ()
+| Paddq_ri (r1, r2) -> Printf.printf "Paddq_ri" ; ()
+| Psubl_rr (r1, r2) -> Printf.printf "Psubl_rr" ; ()
+| Psubq_rr (r1, r2) -> Printf.printf "Psubq_rr" ; ()
+| Pimull_rr (r1, r2) -> Printf.printf "Pimull_rr" ; ()
+| Pimulq_rr (r1, r2) -> Printf.printf "Pimulq_rr" ; ()
+| Pimull_ri (r1, r2) -> Printf.printf "Pimull_ri" ; ()
+| Pimulq_ri (r1, r2) -> Printf.printf "Pimulq_ri" ; ()
+| Pimull_r r -> Printf.printf "Pimull_r" ; ()
+| Pimulq_r r -> Printf.printf "Pimulq_r" ; ()
+| Pmull_r r -> Printf.printf "Pmull_r" ; ()
+| Pmulq_r r -> Printf.printf "Pmulq_r" ; ()
+| Pcltd -> Printf.printf "Pcltd" ; ()
+| Pcqto -> Printf.printf "Pcqto" ; ()
+| Pdivl r -> Printf.printf "Pdivl" ; ()
+| Pdivq r -> Printf.printf "Pdivq" ; ()
+| Pidivl r -> Printf.printf "Pidivl" ; ()
+| Pidivq r -> Printf.printf "Pidivq" ; ()
+| Pandl_rr (r1, r2) -> Printf.printf "Pandl_rr" ; ()
+| Pandq_rr (r1, r2) -> Printf.printf "Pandq_rr" ; ()
+| Pandl_ri (r1, r2) -> Printf.printf "Pandl_ri" ; ()
+| Pandq_ri (r1, r2) -> Printf.printf "Pandq_ri" ; ()
+| Porl_rr (r1, r2) -> Printf.printf "Porl_rr" ; ()
+| Porq_rr (r1, r2) -> Printf.printf "Porq_rr" ; ()
+| Porl_ri (r1, r2) -> Printf.printf "Porl_ri" ; ()
+| Porq_ri (r1, r2) -> Printf.printf "Porq_ri" ; ()
+| Pxorl_r r -> Printf.printf "Pxorl_r" ; ()
+| Pxorq_r r -> Printf.printf "Pxorq_r" ; ()
+| Pxorl_rr (r1, r2) -> Printf.printf "Pxorl_rr" ; ()
+| Pxorq_rr (r1, r2) -> Printf.printf "Pxorq_rr" ; ()
+| Pxorl_ri (r1, r2) -> Printf.printf "Pxorl_ri" ; ()
+| Pxorq_ri (r1, r2) -> Printf.printf "Pxorq_ri" ; ()
+| Pnotl r -> Printf.printf "Pnotl" ; ()
+| Pnotq r -> Printf.printf "Pnotq" ; ()
+| Psall_rcl r -> Printf.printf "Psall_rcl" ; ()
+| Psalq_rcl r -> Printf.printf "Psalq_rcl" ; ()
+| Psall_ri (r1, r2) -> Printf.printf "Psall_ri" ; ()
+| Psalq_ri (r1, r2) -> Printf.printf "Psalq_ri" ; ()
+| Pshrl_rcl r -> Printf.printf "Pshrl_rcl" ; ()
+| Pshrq_rcl r -> Printf.printf "Pshrq_rcl" ; ()
+| Pshrl_ri (r1, r2) -> Printf.printf "Pshrl_ri" ; ()
+| Pshrq_ri (r1, r2) -> Printf.printf "Pshrq_ri" ; ()
+| Psarl_rcl r -> Printf.printf "Psarl_rcl" ; ()
+| Psarq_rcl r -> Printf.printf "Psarq_rcl" ; ()
+| Psarl_ri (r1, r2) -> Printf.printf "Psarl_ri" ; ()
+| Psarq_ri (r1, r2) -> Printf.printf "Psarq_ri" ; ()
+| Pshld_ri (r1, r2, r3) -> Printf.printf "Pshld_ri" ; ()
+| Prorl_ri (r1, r2) -> Printf.printf "Prorl_ri" ; ()
+| Prorq_ri (r1, r2) -> Printf.printf "Prorq_ri" ; ()
+| Pcmpl_rr (r1, r2) -> Printf.printf "Pcmpl_rr" ; ()
+| Pcmpq_rr (r1, r2) -> Printf.printf "Pcmpq_rr" ; ()
+| Pcmpl_ri (r1, r2) -> Printf.printf "Pcmpl_ri" ; ()
+| Pcmpq_ri (r1, r2) -> Printf.printf "Pcmpq_ri" ; ()
+| Ptestl_rr (r1, r2) -> Printf.printf "Ptestl_rr" ; ()
+| Ptestq_rr (r1, r2) -> Printf.printf "Ptestq_rr" ; ()
+| Ptestl_ri (r1, r2) -> Printf.printf "Ptestl_ri" ; ()
+| Ptestq_ri (r1, r2) -> Printf.printf "Ptestq_ri" ; ()
+| Pcmov (r1, r2, r3) -> Printf.printf "Pcmov" ; ()
+| Psetcc (r1, r2) -> Printf.printf "Psetcc" ; ()
+| Paddd_ff (r1, r2) -> Printf.printf "Paddd_ff" ; ()
+| Psubd_ff (r1, r2) -> Printf.printf "Psubd_ff" ; ()
+| Pmuld_ff (r1, r2) -> Printf.printf "Pmuld_ff" ; ()
+| Pdivd_ff (r1, r2) -> Printf.printf "Pdivd_ff" ; ()
+| Pnegd r -> Printf.printf "Pnegd" ; ()
+| Pabsd r -> Printf.printf "Pabsd" ; ()
+| Pcomisd_ff (r1, r2) -> Printf.printf "Pcomisd_ff" ; ()
+| Pxorpd_f r -> Printf.printf "Pxorpd_f" ; ()
+| Padds_ff (r1, r2) -> Printf.printf "Padds_ff" ; ()
+| Psubs_ff (r1, r2) -> Printf.printf "Psubs_ff" ; ()
+| Pmuls_ff (r1, r2) -> Printf.printf "Pmuls_ff" ; ()
+| Pdivs_ff (r1, r2) -> Printf.printf "Pdivs_ff" ; ()
+| Pnegs r -> Printf.printf "Pnegs" ; ()
+| Pabss r -> Printf.printf "Pabss" ; ()
+| Pcomiss_ff (r1, r2) -> Printf.printf "Pcomiss_ff" ; ()
+| Pxorps_f r -> Printf.printf "Pxorps_f" ; ()
+| Pjmp_l r -> Printf.printf "Pjmp_l" ; ()
+| Pjmp_s (r1, r2) -> Printf.printf "Pjmp_s" ; ()
+| Pjmp_r (r1, r2) -> Printf.printf "Pjmp_r" ; ()
+| Pjcc (r1, r2) -> Printf.printf "Pjcc" ; ()
+| Pjcc2 (r1, r2, r3) -> Printf.printf "Pjcc2" ; ()
+| Pjmptbl (r1, r2) -> Printf.printf "Pjmptbl" ; ()
+| Pcall_s (r1, r2) -> Printf.printf "Pcall_s" ; ()
+| Pcall_r (r1, r2) -> Printf.printf "Pcall_r" ; ()
+| Pret -> Printf.printf "Pret" ; ()
+| Pmov_rm_a (r1, r2) -> Printf.printf "Pmov_rm_a" ; ()
+| Pmov_mr_a (r1, r2) -> Printf.printf "Pmov_mr_a" ; ()
+| Pmovsd_fm_a (r1, r2) -> Printf.printf "Pmovsd_fm_a" ; ()
+| Pmovsd_mf_a (r1, r2) -> Printf.printf "Pmovsd_mf_a" ; ()
+| Plabel r -> Printf.printf "Plabel" ; ()
+| Pallocframe (r1, r2, r3) -> Printf.printf "Pallocframe" ; ()
+| Pfreeframe (r1, r2, r3) -> Printf.printf "Pfreeframe" ; ()
+| Pbuiltin (r1, r2, r3) -> Printf.printf "Pbuiltin" ; ()
+| Padcl_ri (r1, r2) -> Printf.printf "Padcl_ri" ; ()
+| Padcl_rr (r1, r2) -> Printf.printf "Padcl_rr" ; ()
+| Paddl_mi (r1, r2) -> Printf.printf "Paddl_mi" ; ()
+| Paddl_rr (r1, r2) -> Printf.printf "Paddl_rr" ; ()
+| Pbsfl (r1, r2) -> Printf.printf "Pbsfl" ; ()
+| Pbsfq (r1, r2) -> Printf.printf "Pbsfq" ; ()
+| Pbsrl (r1, r2) -> Printf.printf "Pbsrl" ; ()
+| Pbsrq (r1, r2) -> Printf.printf "Pbsrq" ; ()
+| Pbswap64 r -> Printf.printf "Pbswap64" ; ()
+| Pbswap32 r -> Printf.printf "Pbswap32" ; ()
+| Pbswap16 r -> Printf.printf "Pbswap16" ; ()
+| Pcfi_adjust r -> Printf.printf "Pcfi_adjust" ; ()
+| Pfmadd132 (r1, r2, r3) -> Printf.printf "Pfmadd132" ; ()
+| Pfmadd213 (r1, r2, r3) -> Printf.printf "Pfmadd213" ; ()
+| Pfmadd231 (r1, r2, r3) -> Printf.printf "Pfmadd231" ; ()
+| Pfmsub132 (r1, r2, r3) -> Printf.printf "Pfmsub132" ; ()
+| Pfmsub213 (r1, r2, r3) -> Printf.printf "Pfmsub213" ; ()
+| Pfmsub231 (r1, r2, r3) -> Printf.printf "Pfmsub231" ; ()
+| Pfnmadd132 (r1, r2, r3) -> Printf.printf "Pfnmadd132" ; ()
+| Pfnmadd213 (r1, r2, r3) -> Printf.printf "Pfnmadd213" ; ()
+| Pfnmadd231 (r1, r2, r3) -> Printf.printf "Pfnmadd231" ; ()
+| Pfnmsub132 (r1, r2, r3) -> Printf.printf "Pfnmsub132" ; ()
+| Pfnmsub213 (r1, r2, r3) -> Printf.printf "Pfnmsub213" ; ()
+| Pfnmsub231 (r1, r2, r3) -> Printf.printf "Pfnmsub231" ; ()
+| Pmaxsd (r1, r2) -> Printf.printf "Pmaxsd" ; ()
+| Pminsd (r1, r2) -> Printf.printf "Pminsd" ; ()
+| Pmovb_rm (r1, r2) -> Printf.printf "Pmovb_rm" ; ()
+| Pmovsq_mr (r1, r2) -> Printf.printf "Pmovsq_mr" ; ()
+| Pmovsq_rm (r1, r2) -> Printf.printf "Pmovsq_rm" ; ()
+| Pmovsb -> Printf.printf "Pmovsb" ; ()
+| Pmovsw -> Printf.printf "Pmovsw" ; ()
+| Pmovw_rm (r1, r2) -> Printf.printf "Pmovw_rm" ; ()
+| Pnop -> Printf.printf "Pnop" ; ()
+| Prep_movsl -> Printf.printf "Prep_movsl" ; ()
+| Psbbl_rr (r1, r2) -> Printf.printf "Psbbl_rr" ; ()
+| Psqrtsd (r1, r2) -> Printf.printf "Psqrtsd" ; ()
+| Psubl_ri (r1, r2) -> Printf.printf "Psubl_ri" ; ()
+| Psubq_ri (r1, r2) -> Printf.printf "Psubq_ri" ; ()
+
+
 (* Name used for version string etc. *)
 let tool_name = "C verified compiler"
 
@@ -81,30 +260,54 @@ let compile_c_file sourcename ifile ofile =
   (* Dump Asm in binary and JSON format *)
   (* insert code here *)
   (* Optional monad type, match with None/Maybe to extract Mem.mem.mem *)
-  let memory = Genv.init_mem asm in
-  (* match Genv.init_mem asm with
-    | None -> None
-    | Some memory ->  *)
+  match Genv.init_mem asm with
+    | None -> ()
+    | Some memory ->  
   let ge = Genv.globalenv asm in
   (* Pregmap.init initializes the register map *)
   (* extraction/Maps.ml line 384 EMap module *)
   let regset = Pregmap.init Vundef in
   let pc_init = Genv.symbol_address ge asm.prog_main Ptrofs.zero in
   let regset = Pregmap.set PC pc_init regset in
-  (* 
-  let regset = Pregmap.set RA None regset in
-  let regset = Pregmap.set RSP Vnullptr regset in *)
+  
+  let regset = Pregmap.set RA coq_Vnullptr regset in
+  
+  (* let regset = Pregmap.set RSP coq_Vnullptr regset in *)
 
   (*initial_state p (State rs0 m0).*)
-
-  (* let run ge asm rs m =
-    match Pregmap.get PC rs with
-      | Some Vptr(b, _) -> run ge asm Asm.exec_instr
-      | _ -> None (* final state *)
+  let rec step (ge : (Asm.fundef, unit) Globalenvs.Genv.t) (asm : Asm.program) 
+    (rs : (Asm.PregEq.t -> Values.coq_val)) (m : Memory.Mem.mem) =
+  match Pregmap.get PC rs with
+    | Vptr(b, ofs) -> 
+    
+    let c_f = Genv.find_funct_ptr ge b in (* Some (Internal f) *)
+    begin
+    match c_f with
+      | Some (Internal f) ->
+        let inst = find_instr (Ptrofs.unsigned ofs) f.fn_code in
+        begin
+          match inst with
+          | Some i -> 
+            print_instruction i;
+            Printf.printf "\n";
+            let o = exec_instr ge f i rs m in
+            begin
+            match o with
+            | Next (r1, m1) -> step ge asm r1 m1
+            | Stuck -> Printf.printf "Stuck on step\n"; None
+            end
+          | _ -> Printf.printf "no inst\n"; None
+        end
+      | _ -> Printf.printf "No Internal f\n"; None
+    end
+    | _ -> Some rs (* final state *)
   in
 
-  let result = run ge asm regset memory in *)
-
+  Printf.printf "Stepping through Asm\n";
+  let result = step ge asm regset memory in
+  match result with
+  | Some a -> Printf.printf "Some a";
+  | None -> 
 
   AsmToJSON.print_if asm sourcename;
   (* Print Asm in text form *)
