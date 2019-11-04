@@ -710,6 +710,8 @@ Definition exec_instr (f: function) (i: instruction) (rs: regset) (m: mem) : out
       Next (nextinstr_nf (rs#rd <- (Val.sub rs#rd rs#r1))) m
   | Psubq_rr rd r1 =>
       Next (nextinstr_nf (rs#rd <- (Val.subl rs#rd rs#r1))) m
+  | Psubq_ri rd n =>
+      Next (nextinstr_nf (rs#rd <- (Val.subl rs#rd (Vlong n)))) m
   | Pimull_rr rd r1 =>
       Next (nextinstr_nf (rs#rd <- (Val.mul rs#rd rs#r1))) m
   | Pimulq_rr rd r1 =>
@@ -1006,8 +1008,7 @@ Definition exec_instr (f: function) (i: instruction) (rs: regset) (m: mem) : out
   | Prep_movsl
   | Psbbl_rr _ _
   | Psqrtsd _ _
-  | Psubl_ri _ _
-  | Psubq_ri _ _ => Stuck
+  | Psubl_ri _ _ => Stuck
   end.
 
 (** Translation of the LTL/Linear/Mach view of machine registers
