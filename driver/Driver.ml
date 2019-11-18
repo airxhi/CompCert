@@ -34,6 +34,10 @@ open Events
 open Ctypes
 open Csyntax
 open Csem
+open Cexec
+open Interp
+open BinInt
+open Memdata
 
 let print_instruction i = match i with
 | Pmov_rr (r1, r2) -> Printf.printf "Pmov_rr" ; ()
@@ -273,8 +277,9 @@ let compile_c_file sourcename ifile ofile =
   let ge = Genv.globalenv test_asm in
   (* Pregmap.init initializes the register map *)
   (* extraction/Maps.ml line 384 EMap module *)
+
   let regset = Pregmap.init Vundef in
-  let pc_init = Genv.symbol_address ge asm.prog_main Ptrofs.zero in
+  let pc_init = Genv.symbol_address ge test_asm.prog_main Ptrofs.zero in
   let regset = Pregmap.set PC pc_init regset in
   let regset = Pregmap.set RA coq_Vnullptr regset in
 
@@ -302,14 +307,34 @@ let compile_c_file sourcename ifile ofile =
             end
           | _ -> Printf.printf "no inst\n"; None
         end
-      | Some (External f) -> Printf.printf "External f"; None
-      | _ -> Printf.printf "internal f\n"; None
+      | Some (External f) -> 
+        Printf.printf "External f\n";
+        begin
+          match f with
+          | EF_malloc -> 
+            Printf.printf "It's a malloc!\n"; 
+            (* malloc args in rdi *)
+            let v = Pregmap.get (IR RDI) rs in
+            begin
+              match do_alloc_size v with
+              | Some sz ->
+                let (m', b) =
+                  Mem.alloc m (Z.opp (size_chunk coq_Mptr)) (Ptrofs.unsigned sz)
+                in
+                (match Mem.store coq_Mptr m' b (Z.opp (size_chunk coq_Mptr)) v with
+                | Some m'' -> step ge asm (nextinstr rs) m''
+                | None -> None)
+              | None -> None
+            end
+          | _ -> Printf.printf "Not a malloc!\n"; None
+        end
+      | _ -> Printf.printf "Who knows :o\n"; None
     end
     | _ -> Some rs (* final state *)
   in
 
   Printf.printf "Stepping through Asm\n";
-  let result = step ge asm regset memory in
+  let result = step ge test_asm regset memory in
   let z = match result with
   | Some a -> 
     let q = Pregmap.get (IR RAX) a in
