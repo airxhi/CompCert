@@ -260,19 +260,23 @@ let compile_c_file sourcename ifile ofile =
   (* Dump Asm in binary and JSON format *)
   (* insert code here *)
   (* Optional monad type, match with None/Maybe to extract Mem.mem.mem *)
-  match Genv.init_mem asm with
+  
+  let test_asm = match Compiler.transf_c_program csyntax with
+    | Errors.OK test_asm -> test_asm
+    | Errors.Error msg ->
+      let loc = file_loc sourcename in
+        fatal_error loc "%a"  print_error msg in
+
+  match Genv.init_mem test_asm with
     | None -> ()
     | Some memory ->  
-  let ge = Genv.globalenv asm in
+  let ge = Genv.globalenv test_asm in
   (* Pregmap.init initializes the register map *)
   (* extraction/Maps.ml line 384 EMap module *)
   let regset = Pregmap.init Vundef in
   let pc_init = Genv.symbol_address ge asm.prog_main Ptrofs.zero in
   let regset = Pregmap.set PC pc_init regset in
-  
   let regset = Pregmap.set RA coq_Vnullptr regset in
-  
-  (* let regset = Pregmap.set RSP coq_Vnullptr regset in *)
 
   (*initial_state p (State rs0 m0).*)
   let rec step (ge : (Asm.fundef, unit) Globalenvs.Genv.t) (asm : Asm.program) 
@@ -298,16 +302,46 @@ let compile_c_file sourcename ifile ofile =
             end
           | _ -> Printf.printf "no inst\n"; None
         end
-      | _ -> Printf.printf "No Internal f\n"; None
+      | Some (External f) -> Printf.printf "External f"; None
+      | _ -> Printf.printf "internal f\n"; None
     end
     | _ -> Some rs (* final state *)
   in
 
   Printf.printf "Stepping through Asm\n";
   let result = step ge asm regset memory in
-  match result with
-  | Some a -> Printf.printf "Some a";
-  | None -> 
+  let z = match result with
+  | Some a -> 
+    let q = Pregmap.get (IR RAX) a in
+    begin
+    match q with
+      | Vundef -> Printf.printf "Vundef";None
+      | Vint a -> 
+        begin 
+        match a with 
+        | Zpos a -> 
+          begin match a with
+            | Coq_xI a -> Printf.printf "xI\n"; ()
+            | Coq_xO a -> Printf.printf "xO\n"; ()
+            | Coq_xH -> Printf.printf "xH\n"; ()
+          end;
+          () 
+        | Z0 -> Printf.printf "Z0"; ()
+        | Zneg a -> Printf.printf "Zneg"; () 
+        end;
+        None
+      | Vlong a-> Printf.printf "Vlong";None
+      | Vfloat a-> Printf.printf "Vfloat";None
+      | Vsingle a-> Printf.printf "Vsingle";None
+      | Vptr (a,b)-> Printf.printf "Vptr";None
+    end
+  | None -> None in
+
+  AsmToJSON.print_if test_asm sourcename;
+  (* Print Asm in text form *)
+  let oc = open_out "asm_out.s" in
+  PrintAsm.print_program oc test_asm;
+  close_out oc;
 
   AsmToJSON.print_if asm sourcename;
   (* Print Asm in text form *)

@@ -807,8 +807,8 @@ module Target(System: SYSTEM):TARGET =
       | Plabel(l) ->
           fprintf oc "%a:\n" label (transl_label l)
       | Pallocframe(sz, ofs_ra, ofs_link)
-      | Pfreeframe(sz, ofs_ra, ofs_link) ->
-	 assert false
+      | Pfreeframe(sz, ofs_ra, ofs_link) -> fprintf oc "[debug]	Pfreeframe\n"; ()
+	 (* assert false *)
       | Pbuiltin(ef, args, res) ->
           begin match ef with
             | EF_annot(kind,txt, targs) ->
