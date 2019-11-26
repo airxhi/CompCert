@@ -38,6 +38,8 @@ open Cexec
 open Interp
 open BinInt
 open Memdata
+open Coqlib
+open Decidableplus
 
 let print_instruction i = match i with
 | Pmov_rr (r1, r2) -> Printf.printf "Pmov_rr" ; ()
@@ -217,6 +219,107 @@ let print_instruction i = match i with
 | Psubl_ri (r1, r2) -> Printf.printf "Psubl_ri" ; ()
 | Psubq_ri (r1, r2) -> Printf.printf "Psubq_ri" ; ()
 
+(** val do_ef_malloc :
+    world -> coq_val list -> Mem.mem ->
+    (((world * trace) * coq_val) * Mem.mem) option **)
+
+let do_ef_malloc v m =
+  (match do_alloc_size v with
+  | Some sz ->
+    let (m', b) =
+      Mem.alloc m (Z.opp (size_chunk coq_Mptr)) (Ptrofs.unsigned sz)
+    in
+    (match Mem.store coq_Mptr m' b (Z.opp (size_chunk coq_Mptr)) v with
+      | Some m'' -> Some (Vptr (b, Ptrofs.zero), m'')
+      | None -> None)
+  | None -> None)
+
+(** val do_ef_free :
+    world -> coq_val list -> Mem.mem ->
+    (((world * trace) * coq_val) * Mem.mem) option **)
+
+let do_ef_free v m =
+  (match v with
+    | Vptr (b, lo) ->
+      (match Mem.load coq_Mptr m b
+                (Z.sub (Ptrofs.unsigned lo) (size_chunk coq_Mptr)) with
+        | Some vsz ->
+          (match do_alloc_size vsz with
+          | Some sz ->
+            if zlt Z0 (Ptrofs.unsigned sz)
+            then (match Mem.free m b
+                          (Z.sub (Ptrofs.unsigned lo)
+                            (size_chunk coq_Mptr))
+                          (Z.add (Ptrofs.unsigned lo)
+                            (Ptrofs.unsigned sz)) with
+                  | Some m' -> Some (Vundef, m')
+                  | None -> None)
+            else None
+            | _ -> None)
+          | None -> None)
+      | _ -> None)
+
+(** val do_ef_memcpy :
+  coq_Z -> coq_Z -> world -> coq_val list -> Mem.mem ->
+  (((world * trace) * coq_val) * Mem.mem) option **)
+
+let do_ef_memcpy sz al vargs m =
+  match vargs with
+  | [] -> None
+  | v :: l ->
+  (match v with
+    | Vptr (bdst, odst) ->
+      (match l with
+      | [] -> None
+      | v0 :: l0 ->
+        (match v0 with
+          | Vptr (bsrc, osrc) ->
+            (match l0 with
+            | [] ->
+              if (&&)
+                    ((||) (coq_Decidable_eq_Z al (Zpos Coq_xH))
+                      ((||) (coq_Decidable_eq_Z al (Zpos (Coq_xO Coq_xH)))
+                        ((||)
+                          (coq_Decidable_eq_Z al (Zpos (Coq_xO (Coq_xO
+                            Coq_xH))))
+                          (coq_Decidable_eq_Z al (Zpos (Coq_xO (Coq_xO
+                            (Coq_xO Coq_xH))))))))
+                    ((&&) (coq_Decidable_ge_Z sz Z0)
+                      ((&&) (coq_Decidable_divides al sz)
+                        ((&&)
+                          (if coq_Decidable_gt_Z sz Z0
+                          then coq_Decidable_divides al
+                                  (Ptrofs.unsigned osrc)
+                          else true)
+                          ((&&)
+                            (if coq_Decidable_gt_Z sz Z0
+                            then coq_Decidable_divides al
+                                    (Ptrofs.unsigned odst)
+                            else true)
+                            ((||)
+                              (negb (coq_Decidable_eq_positive bsrc bdst))
+                              ((||)
+                                (coq_Decidable_eq_Z (Ptrofs.unsigned osrc)
+                                  (Ptrofs.unsigned odst))
+                                ((||)
+                                  (coq_Decidable_le_Z
+                                    (Z.add (Ptrofs.unsigned osrc) sz)
+                                    (Ptrofs.unsigned odst))
+                                  (coq_Decidable_le_Z
+                                    (Z.add (Ptrofs.unsigned odst) sz)
+                                    (Ptrofs.unsigned osrc)))))))))
+              then (match Mem.loadbytes m bsrc (Ptrofs.unsigned osrc) sz with
+                    | Some bytes ->
+                      (match Mem.storebytes m bdst (Ptrofs.unsigned odst)
+                                bytes with
+                        | Some m' -> Some (Vundef, m')
+                        | None -> None)
+                    | None -> None)
+              else None
+            | _ :: _ -> None)
+          | _ -> None))
+    | _ -> None)
+
 
 (* Name used for version string etc. *)
 let tool_name = "C verified compiler"
@@ -303,37 +406,45 @@ let compile_c_file sourcename ifile ofile =
             begin
             match o with
             | Next (r1, m1) -> step ge asm r1 m1
-            | Stuck -> Printf.printf "Stuck on step\n"; None
+            | Stuck -> Printf.printf "Execution of \""; print_instruction i; Printf.printf "\" instruction invalid!\n"; None
             end
           | _ -> Printf.printf "no inst\n"; None
         end
       | Some (External f) -> 
-        Printf.printf "External f\n";
         begin
           match f with
           | EF_malloc -> 
-            Printf.printf "It's a malloc!\n"; 
-            (* malloc args in rdi *)
+            Printf.printf "Malloc\n";
             let v = Pregmap.get (IR RDI) rs in
+            let m'' = do_ef_malloc v m in
             begin
-              match do_alloc_size v with
-              | Some sz ->
-                let (m', b) =
-                  Mem.alloc m (Z.opp (size_chunk coq_Mptr)) (Ptrofs.unsigned sz)
-                in
-                (match Mem.store coq_Mptr m' b (Z.opp (size_chunk coq_Mptr)) v with
-                | Some m'' -> step ge asm (nextinstr rs) m''
-                | None -> None)
-              | None -> None
+            match m'' with
+                | Some (res, m'') -> 
+                  let rs' = (set_pair (loc_external_result (ef_sig f)) res (undef_caller_save_regs rs)) in
+                  let rs' = Pregmap.set PC (Pregmap.get RA rs) rs' in
+                  step ge asm rs' m''
+                | None -> None
             end
-          | _ -> Printf.printf "Not a malloc!\n"; None
+          | EF_free -> 
+            Printf.printf "Malloc\n";
+            let v = Pregmap.get (IR RDI) rs in
+            let m'' = do_ef_free v m in
+            begin
+            match m'' with
+                | Some (res, m'') -> 
+                  let rs' = (set_pair (loc_external_result (ef_sig f)) res (undef_caller_save_regs rs)) in
+                  let rs' = Pregmap.set PC (Pregmap.get RA rs) rs' in
+                  step ge asm rs' m''
+                | None -> None
+            end
+          | _ -> Printf.printf "Not defined!\n"; None
         end
       | _ -> Printf.printf "Who knows :o\n"; None
     end
     | _ -> Some rs (* final state *)
   in
 
-  Printf.printf "Stepping through Asm\n";
+  Printf.printf "-----------------------\nStepping through Asm...\n-----------------------\n";
   let result = step ge test_asm regset memory in
   let z = match result with
   | Some a -> 
@@ -351,14 +462,14 @@ let compile_c_file sourcename ifile ofile =
             | Coq_xH -> Printf.printf "xH\n"; ()
           end;
           () 
-        | Z0 -> Printf.printf "Z0"; ()
-        | Zneg a -> Printf.printf "Zneg"; () 
+        | Z0 -> Printf.printf "Z0\n"; ()
+        | Zneg a -> Printf.printf "Zneg\n"; () 
         end;
         None
-      | Vlong a-> Printf.printf "Vlong";None
-      | Vfloat a-> Printf.printf "Vfloat";None
-      | Vsingle a-> Printf.printf "Vsingle";None
-      | Vptr (a,b)-> Printf.printf "Vptr";None
+      | Vlong a-> Printf.printf "Vlong\n";None
+      | Vfloat a-> Printf.printf "Vfloat\n";None
+      | Vsingle a-> Printf.printf "Vsingle\n";None
+      | Vptr (a,b)-> Printf.printf "Vptr\n";None
     end
   | None -> None in
 

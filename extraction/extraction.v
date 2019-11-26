@@ -186,5 +186,7 @@ Separate Extraction
    Machregs.destroyed_at_indirect_call
    AST.signature_main
    Floats.Float32.from_parsed Floats.Float.from_parsed
-   Globalenvs.Senv.invert_symbol Asm.exec_instr
+   Globalenvs.Senv.invert_symbol Asm.exec_instr Values.Vnullptr 
+   Asm.find_instr Asm.set_pair Asm.undef_caller_save_regs
+   Asm.loc_external_result
    Parser.translation_unit_file.
