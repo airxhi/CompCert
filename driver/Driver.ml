@@ -263,7 +263,7 @@ let do_ef_free v m =
   coq_Z -> coq_Z -> world -> coq_val list -> Mem.mem ->
   (((world * trace) * coq_val) * Mem.mem) option **)
 
-let do_ef_memcpy sz al vargs m =
+(* let do_ef_memcpy sz al vargs m =
   match vargs with
   | [] -> None
   | v :: l ->
@@ -318,8 +318,8 @@ let do_ef_memcpy sz al vargs m =
               else None
             | _ :: _ -> None)
           | _ -> None))
-    | _ -> None)
-
+    | _ -> None) *)
+  
 
 (* Name used for version string etc. *)
 let tool_name = "C verified compiler"
