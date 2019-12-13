@@ -24,6 +24,11 @@ open Ctypes
 open Csyntax
 open Csem
 
+(* open Regular.Std
+open Bap.Std
+open Bap_plugins.Std
+open Bap_core_theory
+open Bap_main *)
 (* Configuration *)
 
 let trace = ref 1   (* 0 if quiet, 1 if normally verbose, 2 if full trace *)
@@ -31,6 +36,10 @@ let trace = ref 1   (* 0 if quiet, 1 if normally verbose, 2 if full trace *)
 type mode = First | Random | All
 
 let mode = ref First
+
+(* file to link *)
+type link = A | B
+let link = ref B
 
 (* Printing events *)
 
@@ -627,13 +636,37 @@ let fixup_main p =
       | _ ->
           fprintf err_formatter "ERROR: wrong type for main() function@.";
           None
+    
+open Core_kernel
+open Format
+open Regular.Std
+open Bap.Std
+open Bap_plugins.Std
+open Bap_core_theory
+open Bap_main
+open Bap.Std.Disasm
+open Mc_main
+
+let print_insn insn =
+      Insn.with_printer "insn" (fun () ->
+          printf "%a@." Insn.pp insn)
+
+let print_insn2 p =
+  Seq.iter p ~f:(fun (mem, insn) -> 
+    print_insn (insn))
 
 (* Execution of a whole program *)
 (* takes program as parsed csyntax *)
 
 let execute prog =
+  let x = match of_file "/home/alastair/programming/temp/c_test/bin" with
+    | Ok x -> Printf.printf "Found file"; 
+      print_insn2 (insns x); None
+    | Error err -> Printf.printf (Error.to_string_hum err); None
+  in
+
+  Printf.printf ("???");
   Random.self_init();
-  (*Printf.printf "Compilation test\n";*)
   let p = std_formatter in
   pp_set_max_indent p 30;
   pp_set_max_boxes p 10;

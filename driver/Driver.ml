@@ -40,6 +40,10 @@ open BinInt
 open Memdata
 open Coqlib
 open Decidableplus
+open Datatypes
+
+(* Bap *)
+open Bap_main
 
 let print_instruction i = match i with
 | Pmov_rr (r1, r2) -> Printf.printf "Pmov_rr" ; ()
@@ -263,7 +267,7 @@ let do_ef_free v m =
   coq_Z -> coq_Z -> world -> coq_val list -> Mem.mem ->
   (((world * trace) * coq_val) * Mem.mem) option **)
 
-(* let do_ef_memcpy sz al vargs m =
+let do_ef_memcpy sz al vargs m =
   match vargs with
   | [] -> None
   | v :: l ->
@@ -318,7 +322,7 @@ let do_ef_free v m =
               else None
             | _ :: _ -> None)
           | _ -> None))
-    | _ -> None) *)
+    | _ -> None)
   
 
 (* Name used for version string etc. *)
@@ -381,6 +385,8 @@ let compile_c_file sourcename ifile ofile =
   (* Pregmap.init initializes the register map *)
   (* extraction/Maps.ml line 384 EMap module *)
 
+  let b = Bap_main.init () in
+
   let regset = Pregmap.init Vundef in
   let pc_init = Genv.symbol_address ge test_asm.prog_main Ptrofs.zero in
   let regset = Pregmap.set PC pc_init regset in
@@ -426,9 +432,21 @@ let compile_c_file sourcename ifile ofile =
                 | None -> None
             end
           | EF_free -> 
-            Printf.printf "Malloc\n";
+            Printf.printf "Free\n";
             let v = Pregmap.get (IR RDI) rs in
             let m'' = do_ef_free v m in
+            begin
+            match m'' with
+                | Some (res, m'') -> 
+                  let rs' = (set_pair (loc_external_result (ef_sig f)) res (undef_caller_save_regs rs)) in
+                  let rs' = Pregmap.set PC (Pregmap.get RA rs) rs' in
+                  step ge asm rs' m''
+                | None -> None
+            end
+          | EF_memcpy (sz, al) ->
+            Printf.printf "memcpy\n";
+            let v = Pregmap.get (IR RDI) rs in
+            let m'' = do_ef_memcpy sz al [v] m in
             begin
             match m'' with
                 | Some (res, m'') -> 
@@ -642,6 +660,7 @@ Code generation options: (use -fno-<opt> to turn off -f<opt>)
   -trace         Have the interpreter produce a detailed trace of reductions
   -random        Randomize execution order
   -all           Simulate all possible execution orders
+  -link          Link compiled object file
 |}
 
 let print_usage_and_exit () =
@@ -766,7 +785,8 @@ let cmdline_actions =
   Exact "-quiet", Unit (fun () -> Interp.trace := 0);
   Exact "-trace", Unit (fun () -> Interp.trace := 2);
   Exact "-random", Unit (fun () -> Interp.mode := Interp.Random);
-  Exact "-all", Unit (fun () -> Interp.mode := Interp.All)
+  Exact "-all", Unit (fun () -> Interp.mode := Interp.All);
+  Exact "-link", String(fun s -> Interp.link := A)
  ]
 (* Optimization options *)
 (* -f options: come in -f and -fno- variants *)

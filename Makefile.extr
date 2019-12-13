@@ -56,6 +56,7 @@ cparser/pre_parser.cmx: WARNINGS += -w -41
 cparser/pre_parser.cmo: WARNINGS += -w -41
 
 COMPFLAGS+=-g $(INCLUDES) $(MENHIR_INCLUDES) $(WARNINGS)
+FINDFLAGS=-linkpkg -package bap -package findlib.dynload
 
 # Using .opt compilers if available
 
@@ -76,7 +77,7 @@ PARSERS=cparser/pre_parser.mly
 LEXERS=cparser/Lexer.mll lib/Tokenize.mll \
 	     lib/Readconfig.mll lib/Responsefile.mll
 
-LIBS=str.cmxa unix.cmxa $(MENHIR_LIBS)
+LIBS=str.cmxa $(MENHIR_LIBS)
 LIBS_BYTE=$(patsubst %.cmxa,%.cma,$(patsubst %.cmx,%.cmo,$(LIBS)))
 
 EXECUTABLES=ccomp ccomp.byte cchecklink cchecklink.byte clightgen clightgen.byte
@@ -90,7 +91,7 @@ CCOMP_OBJS:=$(shell $(MODORDER) driver/Driver.cmx)
 
 ccomp: $(CCOMP_OBJS)
 	@echo "Linking $@"
-	@$(OCAMLOPT) -o $@ $(LIBS) $(LINK_OPT) $+
+	@ocamlfind ocamlopt $(COMPFLAGS) -o $@ $(LIBS) $(LINK_OPT) $+ $(FINDFLAGS)
 
 ccomp.byte: $(CCOMP_OBJS:.cmx=.cmo)
 	@echo "Linking $@"
@@ -100,7 +101,7 @@ CLIGHTGEN_OBJS:=$(shell $(MODORDER) exportclight/Clightgen.cmx)
 
 clightgen: $(CLIGHTGEN_OBJS)
 	@echo "Linking $@"
-	@$(OCAMLOPT) -o $@ $(LIBS) $(LINK_OPT) $+
+	@ocamlfind ocamlopt $(COMPFLAGS) -o $@ $(LIBS) $(LINK_OPT) $+ $(FINDFLAGS)
 
 clightgen.byte: $(CLIGHTGEN_OBJS:.cmx=.cmo)
 	@echo "Linking $@"
@@ -120,7 +121,7 @@ endif
 	@$(OCAMLC) -c $<
 %.cmx: %.ml
 	@echo "OCAMLOPT $<"
-	@$(OCAMLOPT) -c $<
+	@ocamlfind ocamlopt $(COMPFLAGS) -c $(FINDFLAGS) $<
 
 %.ml: %.mll
 	$(OCAMLLEX) $<
