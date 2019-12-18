@@ -637,8 +637,8 @@ let fixup_main p =
           fprintf err_formatter "ERROR: wrong type for main() function@.";
           None
     
-open Core_kernel
-open Format
+(*open Core_kernel*)
+(* open Core_kernel *)
 open Regular.Std
 open Bap.Std
 open Bap_plugins.Std
@@ -649,7 +649,7 @@ open Mc_main
 
 let print_insn insn =
       Insn.with_printer "insn" (fun () ->
-          printf "%a@." Insn.pp insn)
+          Format.printf "%a@." Insn.pp insn)
 
 let print_insn2 p =
   Seq.iter p ~f:(fun (mem, insn) -> 
@@ -659,13 +659,19 @@ let print_insn2 p =
 (* takes program as parsed csyntax *)
 
 let execute prog =
-  let x = match of_file "/home/alastair/programming/temp/c_test/bin" with
-    | Ok x -> Printf.printf "Found file"; 
-      print_insn2 (insns x); None
-    | Error err -> Printf.printf (Error.to_string_hum err); None
+  (* let main proj = () in
+  let () = Project.register_pass' main in *)
+  Printf.printf "Hello world";
+  
+  let q = Bap_main.init () in
+  Printf.printf "Wot";
+  let x = match Image.create "/bin/ls" with
+    | Ok (x, err) -> Printf.printf "Found file"; 
+      (* print_insn2 (insns (of_image x)); *)
+      None
+    | Error err -> Printf.printf "%s" (Core_kernel.Error.to_string_hum err); None
   in
 
-  Printf.printf ("???");
   Random.self_init();
   let p = std_formatter in
   pp_set_max_indent p 30;
