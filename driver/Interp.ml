@@ -636,41 +636,65 @@ let fixup_main p =
       | _ ->
           fprintf err_formatter "ERROR: wrong type for main() function@.";
           None
-    
-(*open Core_kernel*)
-(* open Core_kernel *)
-open Regular.Std
-open Bap.Std
-open Bap_plugins.Std
-open Bap_core_theory
-open Bap_main
-open Bap.Std.Disasm
-open Mc_main
 
+
+
+(* let what = Findlib.init ()
+
+let res = Findlib.record_package Findlib.Record_load "bap" *)
+(* let x = print_endline "Wtf"
+
+let proj = Bap_main.init () *)
+(* 
 let print_insn insn =
       Insn.with_printer "insn" (fun () ->
           Format.printf "%a@." Insn.pp insn)
 
 let print_insn2 p =
   Seq.iter p ~f:(fun (mem, insn) -> 
-    print_insn (insn))
+    print_insn (insn)) *)
+
+let read_whole_file filename =
+  let ch = open_in filename in
+  let s = really_input_string ch (in_channel_length ch) in
+  close_in ch;
+  s
+
+let rec to_int n o = match n with
+  | 0 -> o
+  | _ -> to_int (n-1) (Datatypes.S o)
+
+let linear_addr reg ofs = Asm.Addrmode(Some reg, None, Coq_inl ofs)
+let global_addr id ofs = Asm.Addrmode(None, None, Coq_inr(id, ofs))
+
 
 (* Execution of a whole program *)
 (* takes program as parsed csyntax *)
-
 let execute prog =
-  (* let main proj = () in
-  let () = Project.register_pass' main in *)
-  Printf.printf "Hello world";
-  
-  let q = Bap_main.init () in
-  Printf.printf "Wot";
-  let x = match Image.create "/bin/ls" with
-    | Ok (x, err) -> Printf.printf "Found file"; 
-      (* print_insn2 (insns (of_image x)); *)
-      None
-    | Error err -> Printf.printf "%s" (Core_kernel.Error.to_string_hum err); None
-  in
+  let oc_in = Unix.open_process_in "python ./main.py ./test_obj.o extr" in
+  let lines = ref [] in
+  let x = 
+  try 
+    while true do
+      lines := input_line oc_in :: !lines
+    done; !lines
+  with End_of_file -> close_in oc_in; 
+    List.rev !lines in
+
+  List.iter print_endline x;
+
+  print_endline "-----------------";
+
+  let addr1 = linear_addr RSP (Z.of_uint 16) in
+  let addr2 = linear_addr RSP (Z.of_uint 0) in
+
+  (* stupidly did Int64.repr (BinNums.Z.of_nat (to_int 8)) before, write up*)
+  let insn1 = Asm.Psubq_ri (Asm.RSP, Z.of_uint 8) in
+  let insn2 = Asm.Pleaq (RAX, addr1) in
+  let insn3 = Asm.Pmovq_mr (addr2, RAX) in
+  let insn4 = Asm.Pmov_rr (RAX, RDI) in
+  let insn5 = Asm.Psubl_rr (RAX, RSI) in
+  let insn6 = Asm.Paddq_ri (RSP, Z.of_uint 8) in
 
   Random.self_init();
   let p = std_formatter in

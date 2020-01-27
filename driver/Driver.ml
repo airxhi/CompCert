@@ -42,9 +42,6 @@ open Coqlib
 open Decidableplus
 open Datatypes
 
-(* Bap *)
-open Bap_main
-
 let print_instruction i = match i with
 | Pmov_rr (r1, r2) -> Printf.printf "Pmov_rr" ; ()
 | Pmovl_ri (r1, r2) -> Printf.printf "Pmovl_ri" ; ()
@@ -385,7 +382,7 @@ let compile_c_file sourcename ifile ofile =
   (* Pregmap.init initializes the register map *)
   (* extraction/Maps.ml line 384 EMap module *)
 
-  let b = Bap_main.init () in
+  (* let b = Bap_main.init () in *)
 
   let regset = Pregmap.init Vundef in
   let pc_init = Genv.symbol_address ge test_asm.prog_main Ptrofs.zero in

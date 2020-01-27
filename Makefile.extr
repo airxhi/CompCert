@@ -56,7 +56,7 @@ cparser/pre_parser.cmx: WARNINGS += -w -41
 cparser/pre_parser.cmo: WARNINGS += -w -41
 
 COMPFLAGS+=-g $(INCLUDES) $(MENHIR_INCLUDES) $(WARNINGS)
-FINDFLAGS=-linkpkg -package bap -package findlib.dynload
+FINDFLAGS=-linkpkg -package findlib.dynload -linkpkg -package bap
 
 # Using .opt compilers if available
 
@@ -91,7 +91,8 @@ CCOMP_OBJS:=$(shell $(MODORDER) driver/Driver.cmx)
 
 ccomp: $(CCOMP_OBJS)
 	@echo "Linking $@"
-	@ocamlfind ocamlopt $(COMPFLAGS) -o $@ $(LIBS) $(LINK_OPT) $+ $(FINDFLAGS)
+	@echo ocamlfind ocamlopt $(COMPFLAGS) -o $@ $(LIBS) $(LINK_OPT) $(FINDFLAGS) $+
+	@ocamlfind ocamlopt $(COMPFLAGS) -o $@ $(LIBS) $(LINK_OPT) $(FINDFLAGS) $+ 
 
 ccomp.byte: $(CCOMP_OBJS:.cmx=.cmo)
 	@echo "Linking $@"
