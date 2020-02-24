@@ -1,0 +1,4 @@
+#!/bin/bash
+mv Makefile.extr Makefile.extr3
+mv Makefile.extr2 Makefile.extr
+mv Makefile.extr3 Makefile.extr2

@@ -178,8 +178,22 @@ let print_instruction i = match i with
 | Pmovsd_fm_a (r1, r2) -> Printf.printf "Pmovsd_fm_a" ; ()
 | Pmovsd_mf_a (r1, r2) -> Printf.printf "Pmovsd_mf_a" ; ()
 | Plabel r -> Printf.printf "Plabel" ; ()
-| Pallocframe (r1, r2, r3) -> Printf.printf "Pallocframe" ; ()
-| Pfreeframe (r1, r2, r3) -> Printf.printf "Pfreeframe" ; ()
+| Pallocframe (sz, ofs_ra, ofs_link) -> 
+  let open Camlcoq in
+  let open Printf in
+  printf "Pallocframe ";
+  printf "{sz = %d; " (Z.to_int sz); 
+  printf "ofs_ra = %d; " (Z.to_int ofs_ra); 
+  printf "ofs_link = %d}" (Z.to_int ofs_link);
+  ()
+| Pfreeframe (sz, ofs_ra, ofs_link) ->
+  let open Camlcoq in
+  let open Printf in
+  printf "Pfreeframe ";
+  printf "{sz = %d; " (Z.to_int sz); 
+  printf "ofs_ra = %d; " (Z.to_int ofs_ra); 
+  printf "ofs_link = %d}" (Z.to_int ofs_link);
+  ()
 | Pbuiltin (r1, r2, r3) -> Printf.printf "Pbuiltin" ; ()
 | Padcl_ri (r1, r2) -> Printf.printf "Padcl_ri" ; ()
 | Padcl_rr (r1, r2) -> Printf.printf "Padcl_rr" ; ()

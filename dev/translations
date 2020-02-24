@@ -1,0 +1,8 @@
+SUB64ri8  Psubq_ri
+LEA64r    Pleaq
+MOV64mr   Pmovq_mr
+MOV64rr   Pmovrr
+LEA64_32r Pleal
+ADD64ri8  Paddq_ri
+RETQ      Pret
+SUB32rr
