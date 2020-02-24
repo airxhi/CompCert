@@ -389,12 +389,25 @@ let compile_c_file sourcename ifile ofile =
   let regset = Pregmap.set PC pc_init regset in
   let regset = Pregmap.set RA coq_Vnullptr regset in
 
+  let open Camlcoq in
+
+  let publics = List.map (fun s -> P.to_int s) asm.prog_public in
+    List.iter (fun z -> Printf.printf "%d\n" z) publics;
+
+  Printf.printf "%d\n" (P.to_int asm.prog_main);
+
   (*initial_state p (State rs0 m0).*)
   let rec step (ge : (Asm.fundef, unit) Globalenvs.Genv.t) (asm : Asm.program) 
     (rs : (Asm.PregEq.t -> Values.coq_val)) (m : Memory.Mem.mem) =
   match Pregmap.get PC rs with
-    | Vptr(b, ofs) -> 
+    | Vptr(b, ofs) ->
+
+    let offset = Integers.Ptrofs.intval ofs in
     
+    Printf.printf "%d" (P.to_int b);
+    Printf.printf " ";
+    Printf.printf "%d" (Z.to_int offset);
+    Printf.printf " ";
     let c_f = Genv.find_funct_ptr ge b in (* Some (Internal f) *)
     begin
     match c_f with

@@ -8,11 +8,11 @@ if __name__ == '__main__':
     function = sys.argv[2]
 
     img = bap.image(path)
-    sym = img.get_symbol(function)
+    segments = img.segments
+    for s in segments:
+        for sym in s.symbols:
+            print(">"+sym.name)
+            for insn in bap.disasm(sym):
+                print(str(insn.name)+str(insn.operands))
 
-    for insn in bap.disasm(sym):
-        print(insn.name)
-        print(insn.operands)
-
-    print '\n'.join(insn.asm for insn in bap.disasm(sym))
-
+    # print '\n'.join(insn.asm for insn in bap.disasm(sym))
