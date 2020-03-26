@@ -231,6 +231,7 @@ type mode = First | Random | All
 
 let mode = ref First
 
+(* let test_code : ((string * Asm.code) list ref) = ref [] *)
 let test_code = ref []
 
 (* file to link *)
@@ -605,6 +606,7 @@ match Asm.Pregmap.get PC rs with
           print_instruction i;
           Printf.printf "\n";
           let o = Asm.exec_instr ge f i rs m in
+          
           begin
           match o with
           | Next (r1, m1) -> step_insns ge asm r1 m1
@@ -655,9 +657,43 @@ let do_external_function id sg ge w args m =
     let regset = Asm.Pregmap.init Vundef in
     let pc_init = Genv.symbol_address fge local_asm.prog_main Ptrofs.zero in
     let regset = Asm.Pregmap.set PC pc_init regset in
-    let regset = Asm.Pregmap.set RA coq_Vnullptr regset in
-    let regset = Asm.Pregmap.set (IR RDI) (List.hd args) regset in
-    let regset = Asm.Pregmap.set (IR RSI) (List.nth args 1) regset in
+    let regset = Asm.Pregmap.set RA Vundef regset in
+    (* because we are in x86_64 only rpair One's will be returned *)
+    let q = Conventions1.loc_arguments sg in
+    let map_to_regs (s : Locations.loc AST.rpair) =
+      match s with
+      | One a -> 
+        begin
+          match a with
+          | R mreg -> Some (Asmgen.ireg_of mreg)
+          | _ -> None
+        end
+      | _ -> None
+      in
+    let rec set_regs rs args (regs : Asm.ireg Errors.res option list) = 
+      match args with
+        | [] -> Some rs
+        | a::args2 -> 
+        begin
+        match (List.hd regs) with
+          | Some t -> 
+          begin
+          match t with
+            | OK r -> set_regs (Asm.Pregmap.set (IR r) a regset) args2 (List.tl regs)
+            | _ -> None
+          end
+          | _ -> None
+        end
+      in 
+
+    let xs = List.map map_to_regs q in
+    let regset = set_regs regset args xs in
+    match regset with
+    | None -> None
+    | Some regset ->
+
+    (* let regset = Asm.Pregmap.set (IR RDI) (List.hd args) regset in
+    let regset = Asm.Pregmap.set (IR RSI) (List.nth args 1) regset in *)
     flush stdout;
     (* let regset = Asm.Pregmap.set (IR RSI) (List.nth args' 1) regset in *)
     let result = step_insns fge local_asm regset m in
@@ -666,6 +702,9 @@ let do_external_function id sg ge w args m =
       | Some rs ->
     let ret_val = Asm.Pregmap.get (IR RAX) rs in
     convert_external_args ge args sg.sig_args >>= fun eargs ->
+    let _ = match ret_val with
+      | Vundef -> Printf.printf "undef\n"
+      | _ -> () in
     Some (((w, []), ret_val), m)
 
 
@@ -902,22 +941,6 @@ let fixup_main p =
           None
 
 
-
-(* let what = Findlib.init ()
-
-let res = Findlib.record_package Findlib.Record_load "bap" *)
-(* let x = print_endline "Wtf"
-
-let proj = Bap_main.init () *)
-(* 
-let print_insn insn =
-      Insn.with_printer "insn" (fun () ->
-          Format.printf "%a@." Insn.pp insn)
-
-let print_insn2 p =
-  Seq.iter p ~f:(fun (mem, insn) -> 
-    print_insn (insn)) *)
-
 let read_whole_file filename =
   let ch = open_in filename in
   let s = really_input_string ch (in_channel_length ch) in
@@ -949,7 +972,7 @@ let execute prog =
 
   print_endline "-----------------";
 
-  let addr1 = linear_addr RSP (Z.of_uint 16) in
+  (* let addr1 = linear_addr RSP (Z.of_uint 16) in
   let addr2 = linear_addr RSP (Z.of_uint 0) in
 
   (* stupidly did Int64.repr (BinNums.Z.of_nat (to_int 8)) before, write up*)
@@ -957,14 +980,61 @@ let execute prog =
   let insn2 = Asm.Pleaq (RAX, addr1) in
   let insn3 = Asm.Pmovq_mr (addr2, RAX) in *)
   let insn1 = Asm.Pallocframe (Z.of_uint 8, Z.of_uint 0, Z.of_uint 0) in
-  let insn4 = Asm.Pmov_rr (RAX, RDI) in
+  let insn4 = Asm.Pmov_rr (RAX, RDI) in 
   let insn5 = Asm.Psubl_rr (RAX, RSI) in
   let insn6 = Asm.Pfreeframe (Z.of_uint 8, Z.of_uint 0, Z.of_uint 0) in
   (* let insn6 = Asm.Paddq_ri (RSP, Z.of_uint 8) in *)
-  let insn7 = Asm.Pret in
+  let insn7 = Asm.Pret in *)
 (* 
-  let functions = ref *)
-  test_code := [("extr", [insn1; insn4; insn5; insn6; insn7])];
+  let functions = ref *) 
+
+  let getz a i = Z.of_uint (int_of_string (List.nth a i)) in
+  let getr a i = match List.nth a i with
+    | "RAX" -> Asm.RAX
+    | "RBX" -> Asm.RBX
+    | "RCX" -> Asm.RCX
+    | "RDX" -> Asm.RDX
+    | "RSI" -> Asm.RSI
+    | "RDI" -> Asm.RDI
+    | "RBP" -> Asm.RBP
+    | "RSP" -> Asm.RSP
+    | "R8"  -> Asm.R8 
+    | "R9"  -> Asm.R9
+    | "R10" -> Asm.R10
+    | "R11" -> Asm.R11
+    | "R12" -> Asm.R12
+    | "R13" -> Asm.R13
+    | "R14" -> Asm.R14
+    | "R15" -> Asm.R15
+    | _ ->     Asm.RAX
+  in
+    
+
+  let rec set_asm (a :: list) (l : Asm.instruction list) = 
+    let (f :: (b : string list)) = Str.split (Str.regexp " ") a in
+    match f with
+    | ">" -> if (List.length l) > 0 then 
+      begin
+        test_code := !test_code @ [((List.nth b 0), l)]; if List.length list > 0 then set_asm list [] else ()
+      end
+      else ()
+    | i   -> 
+      match i with
+      | "Pallocframe"   -> set_asm list (l @ [Asm.Pallocframe (getz b 0, getz b 1, getz b 2)])
+      | "Pfreeframe"    -> set_asm list (l @ [Asm.Pfreeframe (getz b 0, getz b 1, getz b 2)])
+      | "Pmovl_ri"      -> set_asm list (l @ [Asm.Pmovl_ri (getr b 0, getz b 1)])
+      | "Pcall_r"       -> set_asm list (l @ [Asm.Pnop])
+      | "Pcallxorl_rr"  -> set_asm list (l @ [Asm.Pxorl_rr (getr b 0, getr b 1)])
+      | "Pret"          -> set_asm list (l @ [Asm.Pret])
+      | "Pmov_rr"       -> set_asm list (l @ [Asm.Pmov_rr (getr b 0, getr b 1)])
+      | "Psubl_rr"      -> set_asm list (l @ [Asm.Psubl_rr (getr b 0, getr b 1)])
+      | "Pleal"         -> set_asm list (l @ [Asm.Pleal (getr b 0, Addrmode (Some (getr b 1), Some (getr b 2, getz b 3), Coq_inl (getz b 4)) )])
+      | _ -> Printf.printf "Unkown instruction: %s" i;
+  in
+
+  (* let fun_asm : (string * Asm.code) = ("extr", [insn1; insn4; insn5; insn6; insn7]) in *)
+  set_asm x []; 
+  (* test_code := !test_code @ [fun_asm]; *)
 
   (* test_code := [("extr", [insn1; insn2; insn3; insn4; insn5; insn6; insn7])]; *)
 
