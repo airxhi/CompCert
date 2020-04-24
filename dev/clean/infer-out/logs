@@ -1,0 +1,36 @@
+[5521][environment] CWD = /home/alastair/programming/honours/CompCert/dev/clean
+[5521][environment] No .inferconfig file found
+[5521][environment] Project root = /home/alastair/programming/honours/CompCert/dev/clean
+[5521][environment] INFER_ARGS =   @/tmp/args.tmp.817264  ++Contents of '/tmp/args.tmp.817264':
+[5521][environment]                                         run
+[5521][environment]                                       
+[5521][environment] command line arguments:   infer run -- gcc -c access_freed.cActive checkers: biabduction (C/C++/ObjC, Java), fragment retains view (Java), inefficient keyset iterator (Java), liveness (C/C++/ObjC), RacerD (C/C++/ObjC, Java), SIOF (C/C++/ObjC), uninitialized variables (C/C++/ObjC), Starvation analysis (C/C++/ObjC, Java)
+[5521][environment] Infer log identifier is 
+Infer version v0.17.0
+[5521][environment] Copyright 2009 - present Facebook. All Rights Reserved.
+[5521][environment] 
+[5521][   progress] Capturing in make/cc mode...
+[5521][      debug] 
+[5521][      debug] *** Beginning capture of file /home/alastair/programming/honours/CompCert/dev/clean/access_freed.c ***
+[5521][      debug] Clang frontend action is translating and linting
+[5521][      debug] Loading the following linters files: /opt/infer-linux64-v0.17.0/lib/infer/infer/bin/../lib/linter_rules/linters.al
+[5521][      debug] Elapsed: 46.888ms.
+[5521][      debug] 
+[5521][   progress] Found 1 source file to analyze in /home/alastair/programming/honours/CompCert/dev/clean/infer-out
+[5521][environment] Parallel jobs: 4
+[5528][   progress] access_freed.c starting
+[5528][   progress] access_freed.c DONE
+[5521][   progress] 
+[5521][   progress] Analysis finished in 474mss
+[5521][      debug] collected stats:
+[5521][      debug] Backend stats:
+[5521][      debug]   summary_file_try_load= 22
+[5521][      debug]   summary_read_from_disk= 1
+[5521][      debug]   summary_cache_hits= 11 (50%)
+[5521][      debug]   summary_cache_misses= 11
+[5521][      debug]   summary_has_model_queries= 0
+[5521][      debug]   ondemand_procs_analyzed= 1
+[5521][      debug]   ondemand_local_cache_hits= 6 (60%)
+[5521][      debug]   ondemand_local_cache_misses= 4
+[5521][      debug]   
+[5521][      debug] 

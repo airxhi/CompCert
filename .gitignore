@@ -70,3 +70,7 @@
 /test/clightgen/*.v
 # Coq cache
 .lia.cache
+.vscode/*
+dev/.vscode/*
+npm-debug.log
+*.pyc

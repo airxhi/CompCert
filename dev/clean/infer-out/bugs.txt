@@ -1,0 +1,13 @@
+Found 1 issue
+
+access_freed.c:12: error: USE_AFTER_FREE
+  pointer `x` last assigned on line 6 was freed by call to `free()` at line 11, column 5 and is dereferenced or freed at line 12, column 5.
+  10.       x[40] = 1;
+  11.       free(x);
+  12. >     x[0] = 2;
+  13.       printf("%d", x[0]);
+  14.       return 0;
+
+Summary of the reports
+
+  USE_AFTER_FREE: 1

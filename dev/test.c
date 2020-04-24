@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int extr(int a, int b);
+int extr(int a, int b, int c, int d);
 
 int foo(int a, int b){
 	return a + b;
@@ -30,7 +30,7 @@ int main(){
     z += 1;
     
     x = foo(1,2);
-    a = extr(5,3);
+    a = extr(5,3,1,2);
 
     // array of 10 ints
     // malloc(32);

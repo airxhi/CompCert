@@ -24,6 +24,54 @@ open Ctypes
 open Csyntax
 open Csem
 
+let print_reg (r : Asm.ireg) =
+  match r with
+  | RAX -> print_endline "RAX"
+  | RBX -> print_endline "RBX"
+  | RCX-> print_endline "RCX"
+  | RDX-> print_endline "RDX"
+  | RSI-> print_endline "RSI"
+  | RDI-> print_endline "RDI"
+  | RBP-> print_endline "RBP"
+  | RSP-> print_endline "RSP"
+  | R8-> print_endline "R8"
+  | R9-> print_endline "R9"
+  | R10-> print_endline "R10"
+  | R11-> print_endline "R11"
+  | R12-> print_endline "R12"
+  | R13-> print_endline "R13"
+  | R14-> print_endline "R14"
+  | R15-> print_endline "R15"
+
+let print_freg (r : Asm.freg) =
+  match r with
+  | XMM0 -> print_endline "XMM0"
+  | XMM1 -> print_endline "XMM1"
+  | XMM2 -> print_endline "XMM2"
+  | XMM3 -> print_endline "XMM3"
+  | XMM4 -> print_endline "XMM4"
+  | XMM5 -> print_endline "XMM5"
+  | XMM6 -> print_endline "XMM6"
+  | XMM7 -> print_endline "XMM7"
+  | XMM8 -> print_endline "XMM8"
+  | XMM9 -> print_endline "XMM9"
+  | XMM10 -> print_endline "XMM10"
+  | XMM11 -> print_endline "XMM11"
+  | XMM12 -> print_endline "XMM12"
+  | XMM13 -> print_endline "XMM13"
+  | XMM14 -> print_endline "XMM14"
+  | XMM15 -> print_endline "XMM15"
+
+let print_type (c_val : Values.coq_val) =
+  let open Printf in
+  match c_val with
+  | Vptr _    -> printf "Vptr, "
+  | Vundef    -> printf "Undef, "
+  | Vint _    -> printf "Vint, "
+  | Vlong _   -> printf "Vlong, "
+  | Vfloat _  -> printf "Vfloat, "
+  | Vsingle _ -> printf "Vsingle, "
+
 let print_instruction i = 
   let open Asm in
   match i with
@@ -61,7 +109,7 @@ let print_instruction i =
 | Pmovls_rr r -> Printf.printf "Pmovls_rr" ; ()
 | Pcvtsd2ss_ff (r1, r2) -> Printf.printf "Pcvtsd2ss_ff" ; ()
 | Pcvtss2sd_ff (r1, r2) -> Printf.printf "Pcvtss2sd_ff" ; ()
-| Pcvttsd2si_rf (r1, r2) -> Printf.printf "Pcvttsd2si_rf" ; ()
+| Pcvttsd2si_rf (r1, r2) -> Printf.printf "Pcvttsd2si_rf " ; print_reg r1; print_freg r2; ()
 | Pcvtsi2sd_fr (r1, r2) -> Printf.printf "Pcvtsi2sd_fr" ; ()
 | Pcvttss2si_rf (r1, r2) -> Printf.printf "Pcvttss2si_rf" ; ()
 | Pcvtsi2ss_fr (r1, r2) -> Printf.printf "Pcvtsi2ss_fr" ; ()
@@ -151,7 +199,12 @@ let print_instruction i =
 | Pjmp_l r -> Printf.printf "Pjmp_l" ; ()
 | Pjmp_s (r1, r2) -> Printf.printf "Pjmp_s" ; ()
 | Pjmp_r (r1, r2) -> Printf.printf "Pjmp_r" ; ()
-| Pjcc (r1, r2) -> Printf.printf "Pjcc" ; ()
+| Pjcc (r1, r2) -> Printf.printf "Pjcc" ; 
+  let _ = match r1 with
+    | Cond_g -> Printf.printf " %s" "G" 
+    | Cond_l -> Printf.printf " %s" "L"
+    | _ -> Printf.printf " NotG" in
+  Printf.printf " %d" (Camlcoq.P.to_int r2); ()
 | Pjcc2 (r1, r2, r3) -> Printf.printf "Pjcc2" ; ()
 | Pjmptbl (r1, r2) -> Printf.printf "Pjmptbl" ; ()
 | Pcall_s (r1, r2) -> Printf.printf "Pcall_s" ; ()
@@ -161,7 +214,7 @@ let print_instruction i =
 | Pmov_mr_a (r1, r2) -> Printf.printf "Pmov_mr_a" ; ()
 | Pmovsd_fm_a (r1, r2) -> Printf.printf "Pmovsd_fm_a" ; ()
 | Pmovsd_mf_a (r1, r2) -> Printf.printf "Pmovsd_mf_a" ; ()
-| Plabel r -> Printf.printf "Plabel" ; ()
+| Plabel r -> Printf.printf "Plabel" ; Printf.printf " %d" (Camlcoq.P.to_int r); ()
 | Pallocframe (sz, ofs_ra, ofs_link) ->
   let open Camlcoq in
   let open Printf in
@@ -218,13 +271,107 @@ let print_instruction i =
 | Psubl_ri (r1, r2) -> Printf.printf "Psubl_ri" ; ()
 | Psubq_ri (r1, r2) -> Printf.printf "Psubq_ri" ; ()
 
-(* open Regular.Std
-open Bap.Std
-open Bap_plugins.Std
-open Bap_core_theory
-open Bap_main *)
-(* Configuration *)
+let do_ef_malloc v m =
+  let open BinInt in
+  let open Memdata in
+  (match Cexec.do_alloc_size v with
+  | Some sz ->
+    let (m', b) =
+      Mem.alloc m (Z.opp (size_chunk coq_Mptr)) (Ptrofs.unsigned sz)
+    in
+    (match Mem.store coq_Mptr m' b (Z.opp (size_chunk coq_Mptr)) v with
+      | Some m'' -> Some (Vptr (b, Ptrofs.zero), m'')
+      | None -> print_endline "memstore failed"; None)
+  | None -> print_endline "Allocation failed"; None)
 
+(** val do_ef_free :
+    world -> coq_val list -> Mem.mem ->
+    (((world * trace) * coq_val) * Mem.mem) option **)
+
+let do_ef_free v m =
+  let open Memdata in
+  (match v with
+    | Vptr (b, lo) ->
+      (match Mem.load coq_Mptr m b
+                (Z.sub (Ptrofs.unsigned lo) (size_chunk coq_Mptr)) with
+        | Some vsz ->
+          (match Cexec.do_alloc_size vsz with
+          | Some sz ->
+            if Coqlib.zlt Z0 (Ptrofs.unsigned sz)
+            then (match Mem.free m b
+                          (Z.sub (Ptrofs.unsigned lo)
+                            (size_chunk coq_Mptr))
+                          (Z.add (Ptrofs.unsigned lo)
+                            (Ptrofs.unsigned sz)) with
+                  | Some m' -> Some (Vundef, m')
+                  | None -> None)
+            else None
+            | _ -> None)
+          | None -> None)
+      | _ -> None)
+
+(** val do_ef_memcpy :
+  coq_Z -> coq_Z -> world -> coq_val list -> Mem.mem ->
+  (((world * trace) * coq_val) * Mem.mem) option **)
+
+let do_ef_memcpy sz al vargs m =
+  let open Decidableplus in
+  let open Datatypes in
+  match vargs with
+  | [] -> None
+  | v :: l ->
+  (match v with
+    | Vptr (bdst, odst) ->
+      (match l with
+      | [] -> None
+      | v0 :: l0 ->
+        (match v0 with
+          | Vptr (bsrc, osrc) ->
+            (match l0 with
+            | [] ->
+              if (&&)
+                    ((||) (coq_Decidable_eq_Z al (Zpos Coq_xH))
+                      ((||) (coq_Decidable_eq_Z al (Zpos (Coq_xO Coq_xH)))
+                        ((||)
+                          (coq_Decidable_eq_Z al (Zpos (Coq_xO (Coq_xO
+                            Coq_xH))))
+                          (coq_Decidable_eq_Z al (Zpos (Coq_xO (Coq_xO
+                            (Coq_xO Coq_xH))))))))
+                    ((&&) (coq_Decidable_ge_Z sz Z0)
+                      ((&&) (coq_Decidable_divides al sz)
+                        ((&&)
+                          (if coq_Decidable_gt_Z sz Z0
+                          then coq_Decidable_divides al
+                                  (Ptrofs.unsigned osrc)
+                          else true)
+                          ((&&)
+                            (if coq_Decidable_gt_Z sz Z0
+                            then coq_Decidable_divides al
+                                    (Ptrofs.unsigned odst)
+                            else true)
+                            ((||)
+                              (negb (coq_Decidable_eq_positive bsrc bdst))
+                              ((||)
+                                (coq_Decidable_eq_Z (Ptrofs.unsigned osrc)
+                                  (Ptrofs.unsigned odst))
+                                ((||)
+                                  (coq_Decidable_le_Z
+                                    (Z.add (Ptrofs.unsigned osrc) sz)
+                                    (Ptrofs.unsigned odst))
+                                  (coq_Decidable_le_Z
+                                    (Z.add (Ptrofs.unsigned odst) sz)
+                                    (Ptrofs.unsigned osrc)))))))))
+              then (match Mem.loadbytes m bsrc (Ptrofs.unsigned osrc) sz with
+                    | Some bytes ->
+                      (match Mem.storebytes m bdst (Ptrofs.unsigned odst)
+                                bytes with
+                        | Some m' -> Some (Vundef, m')
+                        | None -> None)
+                    | None -> None)
+              else None
+            | _ :: _ -> None)
+          | _ -> None))
+    | _ -> None)
 let trace = ref 1   (* 0 if quiet, 1 if normally verbose, 2 if full trace *)
 
 type mode = First | Random | All
@@ -232,11 +379,13 @@ type mode = First | Random | All
 let mode = ref First
 
 (* let test_code : ((string * Asm.code) list ref) = ref [] *)
-let test_code = ref []
+let string_to_ident : (string * ident) list ref = ref []
+let malloc_def  = (P.of_int 1, Gfun (AST.External (EF_malloc)))
+let free_def    = (P.of_int 2, Gfun (AST.External (EF_free)))
+let asm_program : Asm.program ref = ref {prog_defs = [malloc_def; free_def]; prog_public = [P.of_int 1; P.of_int 22]; prog_main=P.of_int 1}
 
-(* file to link *)
-type link = A | B
-let link = ref B
+(* file to `link` *)
+let link : string ref = ref ""
 
 (* Printing events *)
 
@@ -590,50 +739,130 @@ let rec convert_external_args ge vl tl =
       convert_external_args ge vl tl >>= fun el -> Some (e1 :: el)
   | _, _ -> None
 
-  let rec step_insns (ge : (Asm.fundef, unit) Globalenvs.Genv.t) (asm : Asm.program) 
-  (rs : (Asm.PregEq.t -> Values.coq_val)) (m : Memory.Mem.mem) =
-match Asm.Pregmap.get PC rs with
-  | Vptr(b, ofs) -> 
-  
-  let c_f = Genv.find_funct_ptr ge b in (* Some (Internal f) *)
-  begin
-  match c_f with
-    | Some (Internal f) ->
-      let inst = Asm.find_instr (Ptrofs.unsigned ofs) f.fn_code in
-      begin
-        match inst with
-        | Some i -> 
-          print_instruction i;
-          Printf.printf "\n";
-          let o = Asm.exec_instr ge f i rs m in
-          
-          begin
-          match o with
-          | Next (r1, m1) -> step_insns ge asm r1 m1
-          | Stuck -> Printf.printf "Execution of \""; print_instruction i; Printf.printf "\" instruction invalid!\n"; None
-          end
-        | _ -> Printf.printf "no inst\n"; None
-      end
-    | Some (External f) -> 
-      begin
-        match f with
-        | _ -> Printf.printf "Not defined!\n"; None
-      end
-    | _ -> Printf.printf "Who knows :o\n"; None
-  end
-  | _ -> Some rs (* final state *)
+let is_ireg (m : Machregs.mreg) = match m with
+  | AX -> true
+  | BX -> true
+  | CX -> true
+  | DX -> true
+  | SI -> true
+  | DI -> true
+  | BP -> true
+  | R8 -> true
+  | R9 -> true
+  | R10 -> true
+  | R11 -> true
+  | R12 -> true
+  | R13 -> true
+  | R14 -> true
+  | R15 -> true
+  | X0 -> false
+  | X1 -> false
+  | X2 -> false
+  | X3 -> false
+  | X4 -> false
+  | X5 -> false
+  | X6 -> false
+  | X7 -> false
+  | X8 -> false
+  | X9 -> false
+  | X10 -> false
+  | X11 -> false
+  | X12 -> false
+  | X13 -> false
+  | X14 -> false
+  | X15 -> false
+  | FP0 -> false
 
-let print_type (c_val : Values.coq_val) =
-  let open Printf in
-  match c_val with
-  | Vptr _    -> printf "Vptr, "
-  | Vundef    -> printf "Undef"
-  | Vint _    -> printf "Vint"
-  | Vlong _   -> printf "Vlong"
-  | Vfloat _  -> printf "Vfloat"
-  | Vsingle _ -> printf "Vsingle"
+type iorfreg = 
+  | F of Asm.freg
+  | I of Asm.ireg
 
 
+let rec step_insns (ge : (Asm.fundef, unit) Globalenvs.Genv.t) (asm : Asm.program) 
+(rs : (Asm.PregEq.t -> Values.coq_val)) (m : Memory.Mem.mem) =
+  match Asm.Pregmap.get PC rs with
+    | Vptr(b, ofs) ->
+    (* print_endline "=================";
+    let _ = match Asm.Pregmap.get (IR RSP) rs with
+      | Vptr (b, ofs) -> Printf.printf "RSP: b=%d, " (P.to_int b); Printf.printf "%d\n" (Z.to_int ofs); ()
+      | _ -> ()
+    in
+    let _ = match Asm.Pregmap.get (IR RBX) rs with
+      | Vint n -> Printf.printf "RBX: b=%d\n" (Z.to_int n); ()
+      | Vundef -> print_endline "RBX: Vundef\n"; ()
+      | _ -> ()
+    in *)
+    let c_f = Genv.find_funct_ptr ge b in (* Some (Internal f) *)
+    begin
+    match c_f with
+      | Some (Internal f) ->
+        let inst = Asm.find_instr (Ptrofs.unsigned ofs) f.fn_code in
+        begin
+          match inst with
+          | Some i -> 
+            let offset = Integers.Ptrofs.intval ofs in
+    
+            Printf.printf "%d" (P.to_int b);
+            Printf.printf " ";
+            Printf.printf "%d" (Z.to_int offset);
+            Printf.printf " ";
+            print_instruction i;
+            Printf.printf "\n";
+            let o = Asm.exec_instr ge f i rs m in
+            
+            begin
+            match o with
+            | Next (r1, m1) -> step_insns ge asm r1 m1
+            | Stuck -> Printf.printf "Execution of \""; print_instruction i; Printf.printf "\" instruction invalid!\n"; None
+            end
+          | _ -> Printf.printf "no inst\n"; None
+        end 
+        | Some (External f) -> 
+        begin
+          let open Asm in
+          match f with
+          | EF_malloc -> 
+            Printf.printf "Malloc\n";
+            let v = Pregmap.get (IR RDI) rs in
+            (* | Vint i -> Printf.printf "EF_malloc value %d\n" (Int32.to_int (camlint_of_coqint i)); () *)
+            let m'' = do_ef_malloc v m in
+            begin
+            match m'' with
+                | Some (res, m'') -> 
+                  let rs' = (set_pair (loc_external_result (ef_sig f)) res (undef_caller_save_regs rs)) in
+                  let rs' = Pregmap.set PC (Pregmap.get RA rs) rs' in
+                  step_insns ge asm rs' m''
+                | None -> print_endline "No, please no"; None
+            end
+          | EF_free -> 
+            Printf.printf "Free\n";
+            let v = Pregmap.get (IR RDI) rs in
+            let m'' = do_ef_free v m in
+            begin
+            match m'' with
+                | Some (res, m'') -> 
+                  let rs' = (set_pair (loc_external_result (ef_sig f)) res (undef_caller_save_regs rs)) in
+                  let rs' = Pregmap.set PC (Pregmap.get RA rs) rs' in
+                  step_insns ge asm rs' m''
+                | None -> None
+            end
+          | EF_memcpy (sz, al) ->
+            Printf.printf "memcpy\n";
+            let v = Pregmap.get (IR RDI) rs in
+            let m'' = do_ef_memcpy sz al [v] m in
+            begin
+            match m'' with
+                | Some (res, m'') -> 
+                  let rs' = (set_pair (loc_external_result (ef_sig f)) res (undef_caller_save_regs rs)) in
+                  let rs' = Pregmap.set PC (Pregmap.get RA rs) rs' in
+                  step_insns ge asm rs' m''
+                | None -> None
+            end
+          | _ -> Printf.printf "Error: Undefined external function\n"; None
+        end
+      | _ -> Printf.printf "Who knows :o\n"; None
+    end
+    | _ -> Some (rs, m) (* final state *)
 
 let do_external_function id sg ge w args m =
   match camlstring_of_coqstring id, args with
@@ -646,16 +875,25 @@ let do_external_function id sg ge w args m =
       convert_external_args ge args sg.sig_args >>= fun eargs ->
       Some(((w, [Event_syscall(id, eargs, EVint len)]), Vint len), m)
   | str, _ -> 
-    List.iter print_type args;
-    let (x, code) = List.find (fun s -> fst s = str) !test_code in
-    let z : Asm.coq_function = { fn_sig=sg; fn_code=code } in
+    (* List.iter print_type args; *)
+    (* print_endline str; *)
+    let (x, ident) = List.find (fun s -> fst s = str) !string_to_ident in
+    (* let z : Asm.coq_function = { fn_sig=sg; fn_code=code } in
     let extr_fun : Asm.fundef = AST.Internal z in
-    let fun_def : (Asm.fundef, unit) globdef = Gfun extr_fun in
-    let local_asm : Asm.program = {prog_defs = [(P.of_int 1, fun_def)]; prog_public = [P.of_int 1]; prog_main= P.of_int 1} in
+    let fun_def : (Asm.fundef, unit) globdef = Gfun extr_fun in *)
+    let a_prog_defs = !asm_program.prog_defs in
+    let a_public_defs  = !asm_program.prog_public in
+    asm_program := {prog_defs=a_prog_defs; prog_public=a_public_defs; prog_main=ident};
+    let local_asm = !asm_program in
+    (* let local_asm : Asm.program = {prog_defs = [(P.of_int 3, fun_def)]; prog_public = [P.of_int 3]; prog_main= P.of_int 3} in *)
     let _ = PrintAsm.print_program stdout local_asm in 
     let fge = Genv.globalenv local_asm in
     let regset = Asm.Pregmap.init Vundef in
     let pc_init = Genv.symbol_address fge local_asm.prog_main Ptrofs.zero in
+    (* let _ = match pc_init with
+      | Vptr (b, off) -> Printf.printf "pc_init address: %d" (Camlcoq.P.to_int b); Printf.printf " %d\n" (Camlcoq.Z.to_int off); ()
+      | _ -> ()
+      in *)
     let regset = Asm.Pregmap.set PC pc_init regset in
     let regset = Asm.Pregmap.set RA Vundef regset in
     (* because we are in x86_64 only rpair One's will be returned *)
@@ -665,12 +903,33 @@ let do_external_function id sg ge w args m =
       | One a -> 
         begin
           match a with
-          | R mreg -> Some (Asmgen.ireg_of mreg)
-          | _ -> None
+          | R mreg -> 
+            begin
+            match is_ireg mreg with
+            | true -> 
+              begin
+              match Asmgen.ireg_of mreg with
+              | Error e -> print_endline "Invalid ireg"; None
+              | OK reg -> print_endline "A reg!"; Some (I reg)
+              end
+            | false -> 
+              begin
+              match Asmgen.freg_of mreg with
+              | Error e -> print_endline "Invalid freg"; None
+              | OK reg -> Some (F reg)
+              end
+            end
+          | S (slot, ofs, typ) -> 
+            let _ = match slot with
+              | Local -> print_endline "Local"
+              | Incoming -> print_endline "Incoming"
+              | Outgoing -> print_endline "Outgoing"
+            in
+            None
         end
-      | _ -> None
+      | _ -> print_endline "Two wtf"; None
       in
-    let rec set_regs rs args (regs : Asm.ireg Errors.res option list) = 
+    let rec set_regs rs args (regs : iorfreg option list) = 
       match args with
         | [] -> Some rs
         | a::args2 -> 
@@ -679,32 +938,42 @@ let do_external_function id sg ge w args m =
           | Some t -> 
           begin
           match t with
-            | OK r -> set_regs (Asm.Pregmap.set (IR r) a regset) args2 (List.tl regs)
-            | _ -> None
+            | I r ->
+              (* print_type a; 
+              print_reg r; *)
+              set_regs (Asm.Pregmap.set (IR r) a rs) args2 (List.tl regs)
+            | F r -> 
+              (* print_type a;
+              print_freg r;  *)
+              set_regs (Asm.Pregmap.set (FR r) a rs) args2 (List.tl regs)
           end
-          | _ -> None
+          | _ -> print_endline "head of list None"; Some rs
         end
       in 
 
     let xs = List.map map_to_regs q in
     let regset = set_regs regset args xs in
     match regset with
-    | None -> None
+    | None ->  Printf.printf "%s\n" "Invalid register set!"; None
     | Some regset ->
-
-    (* let regset = Asm.Pregmap.set (IR RDI) (List.hd args) regset in
-    let regset = Asm.Pregmap.set (IR RSI) (List.nth args 1) regset in *)
     flush stdout;
     (* let regset = Asm.Pregmap.set (IR RSI) (List.nth args' 1) regset in *)
     let result = step_insns fge local_asm regset m in
     match result with
-      | None -> None
-      | Some rs ->
+      | None -> Printf.printf "%s\n" "No result!"; None
+      | Some (rs, m) ->
     let ret_val = Asm.Pregmap.get (IR RAX) rs in
     convert_external_args ge args sg.sig_args >>= fun eargs ->
-    let _ = match ret_val with
-      | Vundef -> Printf.printf "undef\n"
-      | _ -> () in
+    match ret_val with
+      | Vundef ->
+        begin 
+        match Asm.Pregmap.get (FR XMM0) rs with
+          | Vundef -> Some (((w, []), ret_val), m)
+          | Vsingle f -> Some (((w, []), Vsingle f), m)
+          | Vfloat f -> Some (((w, []), Vfloat f), m)
+          | _ -> Some (((w, []), ret_val), m) 
+        end
+      | _ ->
     Some (((w, []), ret_val), m)
 
 
@@ -954,11 +1223,117 @@ let rec to_int n o = match n with
 let linear_addr reg ofs = Asm.Addrmode(Some reg, None, Coq_inl ofs)
 let global_addr id ofs = Asm.Addrmode(None, None, Coq_inr(id, ofs))
 
+let getz a i = Z.of_uint (int_of_string (List.nth a i))
+let getp a i = P.of_int (int_of_string (List.nth a i))
 
-(* Execution of a whole program *)
-(* takes program as parsed csyntax *)
-let execute prog =
-  let oc_in = Unix.open_process_in "python ./main.py ./test_obj.o extr" in
+let s_to_ireg s =
+  match s with
+  | "RAX" -> Asm.RAX
+  | "RBX" -> Asm.RBX
+  | "RCX" -> Asm.RCX
+  | "RDX" -> Asm.RDX
+  | "RSI" -> Asm.RSI
+  | "RDI" -> Asm.RDI
+  | "RBP" -> Asm.RBP
+  | "RSP" -> Asm.RSP
+  | "R8"  -> Asm.R8 
+  | "R9"  -> Asm.R9
+  | "R10" -> Asm.R10
+  | "R11" -> Asm.R11
+  | "R12" -> Asm.R12
+  | "R13" -> Asm.R13
+  | "R14" -> Asm.R14
+  | "R15" -> Asm.R15
+  | _ ->     Asm.RAX
+
+let getr a i = s_to_ireg (List.nth a i)
+
+let s_to_freg s = 
+  let open Asm in
+  match s with
+    | "XMM0" -> XMM0
+    | "XMM1" -> XMM1
+    | "XMM2" -> XMM2
+    | "XMM3" -> XMM3
+    | "XMM4" -> XMM4
+    | "XMM5" -> XMM5
+    | "XMM6" -> XMM6
+    | "XMM7" -> XMM7
+    | "XMM8" -> XMM8
+    | "XMM9" -> XMM9
+    | "XMM10" -> XMM10
+    | "XMM11" -> XMM11
+    | "XMM12" -> XMM12
+    | "XMM13" -> XMM13
+    | "XMM14" -> XMM14
+    | _ -> XMM15
+
+let getrf a i = 
+  s_to_freg (List.nth a i)
+
+let get_addrmode s1 s2 = 
+  match s1 with
+  | "Nil" -> None
+  | s1 -> Some (s_to_ireg s1, Z.of_uint (int_of_string s2))
+
+let rec set_asm (a :: list) (l : Asm.instruction list) = 
+  let (f :: (b : string list)) = Str.split (Str.regexp " ") a in
+  let open Asm in
+  match f with
+  | ">" -> 
+    begin
+    if (List.length l) > 0 then 
+      let z : Asm.coq_function = { fn_sig=AST.signature_main; fn_code=l } in
+      let extr_fun : Asm.fundef = AST.Internal z in
+      let fun_def : (Asm.fundef, unit) globdef = Gfun extr_fun in
+      let identity, _ = List.hd (List.rev (!asm_program.prog_defs)) in
+      let identity = match (Z.add (Zpos identity) (Zpos Coq_xH)) with
+        | Zpos p -> p
+        | _ -> Coq_xH in
+      let my_prog_defs = !asm_program.prog_defs @ [(identity, fun_def)] in
+      let my_public_defs = !asm_program.prog_public @ [identity] in
+      asm_program := {prog_defs=my_prog_defs; prog_public=my_public_defs; prog_main=P.of_int 3};
+      string_to_ident := !string_to_ident @ [(List.nth b 0, identity)];
+      Printf.printf "%s\n" (List.nth b 0);
+      (* test_code := !test_code @ [((List.nth b 0), l)];  *)
+      if List.length list > 0 then set_asm list [] else ()
+    else ()
+    end
+  | "Pallocframe"   -> set_asm list (l @ [Pallocframe (getz b 0, getz b 1, getz b 2)])
+  | "Pfreeframe"    -> set_asm list (l @ [Pfreeframe (getz b 0, getz b 1, getz b 2)])
+  | "Pmovl_ri"      -> set_asm list (l @ [Pmovl_ri (getr b 0, getz b 1)])
+  | "Pmovq_ri"      -> set_asm list (l @ [Pmovq_ri (getr b 0, getz b 1)])
+  | "Pcall_r"       -> set_asm list (l @ [Pnop])
+  | "Pcall_s"       -> set_asm list (l @ [Pcall_s (getp b 0,  {sig_args = []; sig_res = None; sig_cc = cc_default})])
+  | "Pxorl_rr"      -> set_asm list (l @ [Pxorl_r (getr b 0)])
+  | "Pret"          -> set_asm list (l @ [Pret])
+  | "Pmov_rr"       -> set_asm list (l @ [Pmov_rr (getr b 0, getr b 1)])
+  | "Pmovl_rm"      -> set_asm list (l @ [Pmovl_rm (getr b 0, Addrmode (Some (getr b 1), Some (getr b 2, getz b 3), Coq_inl (getz b 4)) )])
+  | "Pmovq_rm"      -> set_asm list (l @ [Pmovq_rm (getr b 0, Addrmode (Some (getr b 1), None, Coq_inl (getz b 4)) )])
+  | "Pmovl_mr"      -> set_asm list (l @ [Pmovl_mr (Addrmode (Some (getr b 0), None, Coq_inl (getz b 3)), getr b 4) ])
+  | "Pmovq_mr"      -> set_asm list (l @ [Pmovq_mr (Addrmode (Some (getr b 0), None, Coq_inl (getz b 3)), getr b 4) ])
+  | "Pmovsd_ff"     -> set_asm list (l @ [Pmovsd_ff (getrf b 0, getrf b 1)])
+  | "Pmovss_fm"     -> set_asm list (l @ [Pmovss_mf (Addrmode (Some (getr b 0), get_addrmode (List.nth b 1) (List.nth b 2), Coq_inl (getz b 3)), getrf b 4)])
+  | "Psubl_rr"      -> set_asm list (l @ [Psubl_rr (getr b 0, getr b 1)])
+  | "Pleal"         -> 
+    set_asm list (l @ [Pleal (getr b 0, Addrmode (Some (getr b 1), get_addrmode (List.nth b 2) (List.nth b 3), Coq_inl (getz b 4)) )])
+  | "Pimull_rr"     -> set_asm list (l @ [Pimull_rr (getr b 0, getr b 1)])
+  | "Pmuls_ff"      -> set_asm list (l @ [Pmuls_ff (getrf b 0, getrf b 1)])
+  | "Padds_ff"      -> set_asm list (l @ [Padds_ff (getrf b 0, getrf b 1)])
+  | "Pcvttss2si_rf" -> set_asm list (l @ [Pcvttss2si_rf (getr b 0, getrf b 1)])
+  | "Pcvtsi2ss_fr"  -> set_asm list (l @ [Pcvtsi2ss_fr (getrf b 0, getr b 1)])
+  | "Pcmpl_ri"      -> set_asm list (l @ [Pcmpl_ri (getr b 0, getz b 1)])
+  | "Pjmp_s"        -> set_asm list (l @ [Pjmp_s (getp b 0,  {sig_args = []; sig_res = None; sig_cc = cc_default})])
+  | "Pjmp_l"        -> set_asm list (l @ [Pjmp_l (getp b 0)])
+  | "Pjcc_L"        -> set_asm list (l @ [Pjcc (Cond_l, getp b 0)])
+  | "Pjcc_G"        -> set_asm list (l @ [Pjcc (Cond_g, getp b 0)])
+  | "Pmov_mr_a"     -> set_asm list (l @ [Pmov_mr_a (Addrmode (Some (getr b 0), None, Coq_inl (getz b 3)), getr b 4)])
+  | "Pmov_rm_a"     -> set_asm list (l @ [Pmov_rm_a (getr b 0, Addrmode (Some (getr b 1), None, Coq_inl (getz b 4)))])
+  | "Plabel"        -> set_asm list (l @ [Plabel (getp b 0)])
+  | _ -> Printf.printf "Unkown instruction: %s\n" f
+
+let link_file (file : string) =
+  let oc_in = Unix.open_process_in (String.concat "" ["python ./main.py "; file]) in
   let lines = ref [] in
   let x = 
   try 
@@ -966,78 +1341,18 @@ let execute prog =
       lines := input_line oc_in :: !lines
     done; !lines
   with End_of_file -> close_in oc_in; 
-    List.rev !lines in
-
-  List.iter print_endline x;
-
-  print_endline "-----------------";
-
-  (* let addr1 = linear_addr RSP (Z.of_uint 16) in
-  let addr2 = linear_addr RSP (Z.of_uint 0) in
-
-  (* stupidly did Int64.repr (BinNums.Z.of_nat (to_int 8)) before, write up*)
-  (* let insn1 = Asm.Psubq_ri (Asm.RSP, Z.of_uint 8) in
-  let insn2 = Asm.Pleaq (RAX, addr1) in
-  let insn3 = Asm.Pmovq_mr (addr2, RAX) in *)
-  let insn1 = Asm.Pallocframe (Z.of_uint 8, Z.of_uint 0, Z.of_uint 0) in
-  let insn4 = Asm.Pmov_rr (RAX, RDI) in 
-  let insn5 = Asm.Psubl_rr (RAX, RSI) in
-  let insn6 = Asm.Pfreeframe (Z.of_uint 8, Z.of_uint 0, Z.of_uint 0) in
-  (* let insn6 = Asm.Paddq_ri (RSP, Z.of_uint 8) in *)
-  let insn7 = Asm.Pret in *)
-(* 
-  let functions = ref *) 
-
-  let getz a i = Z.of_uint (int_of_string (List.nth a i)) in
-  let getr a i = match List.nth a i with
-    | "RAX" -> Asm.RAX
-    | "RBX" -> Asm.RBX
-    | "RCX" -> Asm.RCX
-    | "RDX" -> Asm.RDX
-    | "RSI" -> Asm.RSI
-    | "RDI" -> Asm.RDI
-    | "RBP" -> Asm.RBP
-    | "RSP" -> Asm.RSP
-    | "R8"  -> Asm.R8 
-    | "R9"  -> Asm.R9
-    | "R10" -> Asm.R10
-    | "R11" -> Asm.R11
-    | "R12" -> Asm.R12
-    | "R13" -> Asm.R13
-    | "R14" -> Asm.R14
-    | "R15" -> Asm.R15
-    | _ ->     Asm.RAX
+    List.rev !lines 
   in
-    
-
-  let rec set_asm (a :: list) (l : Asm.instruction list) = 
-    let (f :: (b : string list)) = Str.split (Str.regexp " ") a in
-    match f with
-    | ">" -> if (List.length l) > 0 then 
-      begin
-        test_code := !test_code @ [((List.nth b 0), l)]; if List.length list > 0 then set_asm list [] else ()
-      end
-      else ()
-    | i   -> 
-      match i with
-      | "Pallocframe"   -> set_asm list (l @ [Asm.Pallocframe (getz b 0, getz b 1, getz b 2)])
-      | "Pfreeframe"    -> set_asm list (l @ [Asm.Pfreeframe (getz b 0, getz b 1, getz b 2)])
-      | "Pmovl_ri"      -> set_asm list (l @ [Asm.Pmovl_ri (getr b 0, getz b 1)])
-      | "Pcall_r"       -> set_asm list (l @ [Asm.Pnop])
-      | "Pcallxorl_rr"  -> set_asm list (l @ [Asm.Pxorl_rr (getr b 0, getr b 1)])
-      | "Pret"          -> set_asm list (l @ [Asm.Pret])
-      | "Pmov_rr"       -> set_asm list (l @ [Asm.Pmov_rr (getr b 0, getr b 1)])
-      | "Psubl_rr"      -> set_asm list (l @ [Asm.Psubl_rr (getr b 0, getr b 1)])
-      | "Pleal"         -> set_asm list (l @ [Asm.Pleal (getr b 0, Addrmode (Some (getr b 1), Some (getr b 2, getz b 3), Coq_inl (getz b 4)) )])
-      | _ -> Printf.printf "Unkown instruction: %s" i;
+  set_asm x []
+  
+(* Execution of a whole program *)
+(* takes program as parsed csyntax *)
+let execute prog =
+  let _ = match !link with
+    | "" -> ()
+    | s -> link_file s
   in
-
-  (* let fun_asm : (string * Asm.code) = ("extr", [insn1; insn4; insn5; insn6; insn7]) in *)
-  set_asm x []; 
-  (* test_code := !test_code @ [fun_asm]; *)
-
-  (* test_code := [("extr", [insn1; insn2; insn3; insn4; insn5; insn6; insn7])]; *)
-
+  
   Random.self_init();
   let p = std_formatter in
   pp_set_max_indent p 30;

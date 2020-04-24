@@ -165,9 +165,14 @@ let print_instruction i = match i with
 | Pcomiss_ff (r1, r2) -> Printf.printf "Pcomiss_ff" ; ()
 | Pxorps_f r -> Printf.printf "Pxorps_f" ; ()
 | Pjmp_l r -> Printf.printf "Pjmp_l" ; ()
-| Pjmp_s (r1, r2) -> Printf.printf "Pjmp_s" ; ()
+| Pjmp_s (r1, r2) -> Printf.printf "Pjmp_s " ; Printf.printf "%d" (P.to_int r1); ()
 | Pjmp_r (r1, r2) -> Printf.printf "Pjmp_r" ; ()
-| Pjcc (r1, r2) -> Printf.printf "Pjcc" ; ()
+| Pjcc (r1, r2) -> Printf.printf "Pjcc" ; 
+  let _ = match r1 with
+    | Cond_g -> Printf.printf " %s" "G" 
+    | Cond_l -> Printf.printf " %s" "L"
+    | _ -> Printf.printf " NotG" in
+  Printf.printf " %d" (Camlcoq.P.to_int r2); ()
 | Pjcc2 (r1, r2, r3) -> Printf.printf "Pjcc2" ; ()
 | Pjmptbl (r1, r2) -> Printf.printf "Pjmptbl" ; ()
 | Pcall_s (r1, r2) -> Printf.printf "Pcall_s" ; ()
@@ -177,7 +182,7 @@ let print_instruction i = match i with
 | Pmov_mr_a (r1, r2) -> Printf.printf "Pmov_mr_a" ; ()
 | Pmovsd_fm_a (r1, r2) -> Printf.printf "Pmovsd_fm_a" ; ()
 | Pmovsd_mf_a (r1, r2) -> Printf.printf "Pmovsd_mf_a" ; ()
-| Plabel r -> Printf.printf "Plabel" ; ()
+| Plabel r -> Printf.printf "Plabel" ; Printf.printf " %d" (Camlcoq.P.to_int r); ()
 | Pallocframe (sz, ofs_ra, ofs_link) -> 
   let open Camlcoq in
   let open Printf in
@@ -405,10 +410,10 @@ let compile_c_file sourcename ifile ofile =
 
   let open Camlcoq in
 
-  let publics = List.map (fun s -> P.to_int s) asm.prog_public in
-    List.iter (fun z -> Printf.printf "%d\n" z) publics;
+  (* let publics = List.map (fun s -> P.to_int s) asm.prog_public in
+    List.iter (fun z -> Printf.printf "%d\n" z) publics; *)
 
-  Printf.printf "%d\n" (P.to_int asm.prog_main);
+  (* Printf.printf "%d\n" (P.to_int asm.prog_main); *)
 
   (*initial_state p (State rs0 m0).*)
   let rec step (ge : (Asm.fundef, unit) Globalenvs.Genv.t) (asm : Asm.program) 
@@ -515,11 +520,11 @@ let compile_c_file sourcename ifile ofile =
     end
   | None -> None in
 
-  AsmToJSON.print_if test_asm sourcename;
+  (* AsmToJSON.print_if test_asm sourcename;
   (* Print Asm in text form *)
   let oc = open_out "asm_out.s" in
   PrintAsm.print_program oc test_asm;
-  close_out oc;
+  close_out oc; *)
 
   AsmToJSON.print_if asm sourcename;
   (* Print Asm in text form *)
@@ -684,7 +689,7 @@ Code generation options: (use -fno-<opt> to turn off -f<opt>)
   -trace         Have the interpreter produce a detailed trace of reductions
   -random        Randomize execution order
   -all           Simulate all possible execution orders
-  -link          Link compiled object file
+  -link <file>   Link compiled object file
 |}
 
 let print_usage_and_exit () =
@@ -810,7 +815,7 @@ let cmdline_actions =
   Exact "-trace", Unit (fun () -> Interp.trace := 2);
   Exact "-random", Unit (fun () -> Interp.mode := Interp.Random);
   Exact "-all", Unit (fun () -> Interp.mode := Interp.All);
-  Exact "-link", String(fun s -> Interp.link := A)
+  Exact "-link", String(fun s -> Printf.printf "%s <- file\n" s; Interp.link := s)
  ]
 (* Optimization options *)
 (* -f options: come in -f and -fno- variants *)

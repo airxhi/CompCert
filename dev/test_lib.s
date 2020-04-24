@@ -8,7 +8,9 @@ extr:
 	subq	$8, %rsp
 	leaq	16(%rsp), %rax
 	movq	%rax, 0(%rsp)
-	leal	0(%edi,%esi,1), %eax
+	leal	0(%edi,%esi,1), %esi
+	leal	0(%esi,%edx,1), %edx
+	leal	0(%edx,%ecx,1), %eax
 	addq	$8, %rsp
 	ret
 	.cfi_endproc

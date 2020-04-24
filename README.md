@@ -1,20 +1,34 @@
 # CompCert
 The verified C compiler.
 
-## Overview
-The CompCert C verified compiler is a compiler for a large subset of the
-C programming language that generates code for the PowerPC, ARM, x86 and
-RISC-V processors.
+## Overview of Extension
+This project adds the ability to call functions in external libraries 
+by disassembling and then interpreting the disassembly inside the CompCert interpreter.
 
-The distinguishing feature of CompCert is that it has been formally
-verified using the Coq proof assistant: the generated assembly code is
-formally guaranteed to behave as prescribed by the semantics of the
-source C code.
+## Installation of Extension
+This installation assumes a linux distribution, the installation has been (poorly) tested on Ubuntu 18.04
 
-For more information on CompCert (supported platforms, supported C
-features, installation instructions, using the compiler, etc), please
-refer to the [Web site](http://compcert.inria.fr/) and especially
-the [user's manual](http://compcert.inria.fr/man/).
+Install Coq `v8.9.0`, OCaml `v4.06.1`, BAP `v1.6.0` and `bap-server` using opam  
+Install the `bap` Python2 package using pip
+
+Clone this repository
+
+    ./configure
+    make
+    sudo make install
+
+If `make` fails then run `./swap` and try again, if `make` fails yet again do `make clean` and then try again.
+
+## Running the Extended Interpreter
+
+Run `bap-server` in a separate (or background) process
+
+Navigate to the `dev` folder inside the CompCert project.
+
+    CompCert/dev~$ ccomp -interp <file.c>                   # interpret a single C file
+    CompCert/dev~$ ccomp -interp <file.c> -link <lib.o>     # link to external library    
+
+
 
 ## License
 CompCert is not free software.  This non-commercial release can only
@@ -30,10 +44,3 @@ Recherche en Informatique et en Automatique (INRIA) and
 AbsInt Angewandte Informatik GmbH.
 
 
-## Contact
-General discussions on CompCert take place on the
-[compcert-users@inria.fr](https://sympa.inria.fr/sympa/info/compcert-users)
-mailing list.
-
-For inquiries on the commercial version of CompCert, please contact
-info@absint.com

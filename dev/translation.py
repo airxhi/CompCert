@@ -1,18 +1,19 @@
 insn_map = {
     "MOV64rr": "Pmov_rr",  # ireg * ireg
     "MOV32ri" : "Pmovl_ri", # of ireg * Int.int
+    "MOV64ri32" : "Pmovq_ri",
     # Pmovq_ri of ireg * Int64.int
     # Pmov_rs of ireg * ident
-    # Pmovl_rm of ireg * addrmode
-    # Pmovq_rm of ireg * addrmode
-    # Pmovl_mr of addrmode * ireg
-    # Pmovq_mr of addrmode * ireg
-    # Pmovsd_ff of freg * freg
+    "MOV32rm" : "Pmovl_rm", # of ireg * addrmode
+    # "MOV64rm" : "Pmovq_rm", # of ireg * addrmode
+    "MOV32mr" : "Pmovl_mr", # of addrmode * ireg
+    # "MOV64mr" : "Pmovq_mr", # of addrmode * ireg
+    "MOVAPDrr" : "Pmovsd_ff", # of freg * freg
     # Pmovsd_fi of freg * float
     # Pmovsd_fm of freg * addrmode
     # Pmovsd_mf of addrmode * freg
     # Pmovss_fi of freg * float32
-    # Pmovss_fm of freg * addrmode
+    "MOVSSrm" : "Pmovss_fm", # of freg * addrmode
     # Pmovss_mf of addrmode * freg
     # Pfldl_m of addrmode
     # Pfstpl_m of addrmode
@@ -35,8 +36,8 @@ insn_map = {
     # Pcvtss2sd_ff of freg * freg
     # Pcvttsd2si_rf of ireg * freg
     # Pcvtsi2sd_fr of freg * ireg
-    # Pcvttss2si_rf of ireg * freg
-    # Pcvtsi2ss_fr of freg * ireg
+    "CVTTSS2SIrr" : "Pcvttss2si_rf", # of ireg * freg
+    "CVTSI2SSrr" : "Pcvtsi2ss_fr", # of freg * ireg
     # Pcvttsd2sl_rf of ireg * freg
     # Pcvtsl2sd_fr of freg * ireg
     # Pcvttss2sl_rf of ireg * freg
@@ -45,11 +46,11 @@ insn_map = {
     "LEA64r" : "Pleaq",    # of ireg * addrmode
     # Pnegl of ireg
     # Pnegq of ireg
-    # Paddl_ri of ireg * Int.int
+    "ADD64ri8" : "Paddl_ri", # of ireg * Int.int
     # Paddq_ri of ireg * Int64.int
     "SUB32rr" : "Psubl_rr", # of ireg * ireg
     # Psubq_rr of ireg * ireg
-    # Pimull_rr of ireg * ireg
+    "IMUL32rr" : "Pimull_rr", # of ireg * ireg
     # Pimulq_rr of ireg * ireg
     # Pimull_ri of ireg * Int.int
     # Pimulq_ri of ireg * Int64.int
@@ -95,10 +96,11 @@ insn_map = {
     # Prorl_ri of ireg * Int.int
     # Prorq_ri of ireg * Int.int
     # Pcmpl_rr of ireg * ireg
+    "CMP32rr" : "Pcmpl_rr",
     # Pcmpq_rr of ireg * ireg
-    # Pcmpl_ri of ireg * Int.int
+    "CMP32ri8" : "Pcmpl_ri", # of ireg * Int.int
     # Pcmpq_ri of ireg * Int64.int
-    # Ptestl_rr of ireg * ireg
+    "TEST32rr" : "Ptestl_rr", # Ptestl_rr of ireg * ireg
     # Ptestq_rr of ireg * ireg
     # Ptestl_ri of ireg * Int.int
     # Ptestq_ri of ireg * Int64.int
@@ -112,24 +114,30 @@ insn_map = {
     # Pabsd of freg
     # Pcomisd_ff of freg * freg
     # Pxorpd_f of freg
-    # Padds_ff of freg * freg
+    "ADDSSrr" : "Padds_ff", #Padds_ff of freg * freg
     # Psubs_ff of freg * freg
-    # Pmuls_ff of freg * freg
+    "MULSSrr" : "Pmuls_ff", # of freg * freg
     # Pdivs_ff of freg * freg
     # Pnegs of freg
     # Pabss of freg
     # Pcomiss_ff of freg * freg
     # Pxorps_f of freg
+    "JMP_1" : "Pjmp_l",
     # Pjmp_l of label
+    "JMP_4" : "Pjmp_s",
     # Pjmp_s of ident * signature
     # Pjmp_r of ireg * signature
-    # Pjcc of testcond * label
+    "JL_1" : "Pjcc_L",
+    "JG_1" : "Pjcc_G", 
+    "JGE_1" : "Pjcc_GE", # Pjcc of testcond * label
     # Pjcc2 of testcond * testcond * label
     # Pjmptbl of ireg * label list
     # Pcall_s of ident * signature
-    "CALL64pcrel32" : "Pcall_r", # of ireg * signature
+    "CALL64pcrel32" : "Pcall_s", 
+    # Pcall_r of ireg * signature
     # Pmov_rm_a of ireg * addrmode
-    # Pmov_mr_a of addrmode * ireg
+    "MOV64rm" : "Pmov_rm_a",
+    "MOV64mr" : "Pmov_mr_a", # of addrmode * ireg
     # Pmovsd_fm_a of freg * addrmode
     # Pmovsd_mf_a of addrmode * freg
     # Plabel of label
@@ -173,25 +181,26 @@ insn_map = {
     # Psbbl_rr of ireg * ireg
     # Psqrtsd of freg * freg
     # Psubl_ri of ireg * Int.int
-    # Psubq_ri of ireg * Int64.int
+    "SUB64ri8" : "Psubq_ri", # of ireg * Int64.int
     "RETQ" : "Pret"
 }
 
 op_map = {
     "Pmov_rr": [0,1],  # ireg * ireg
     "Pmovl_ri" : [0,1], # of ireg * Int.int
+    "Pmovq_ri" : [0,1], # of ireg * Int.int
     # Pmovq_ri of ireg * Int64.int
     # Pmov_rs of ireg * ident
-    # Pmovl_rm of ireg * addrmode
-    # Pmovq_rm of ireg * addrmode
-    # Pmovl_mr of addrmode * ireg
-    # Pmovq_mr of addrmode * ireg
-    # Pmovsd_ff of freg * freg
+    "Pmovl_rm" : [0,1,3,2,4], #of ireg * addrmode
+    "Pmovq_rm" : [0,1,3,2,4], # of ireg * addrmode
+    "Pmovl_mr" : [0,2,1,3,5], #of addrmode * ireg
+    "Pmovq_mr" : [0,2,1,3,5], #of addrmode * ireg
+    "Pmovsd_ff" : [0,1], # of freg * freg
     # Pmovsd_fi of freg * float
     # Pmovsd_fm of freg * addrmode
     # Pmovsd_mf of addrmode * freg
     # Pmovss_fi of freg * float32
-    # Pmovss_fm of freg * addrmode
+    "Pmovss_fm" : [0,1,3,2,4], # of freg * addrmode
     # Pmovss_mf of addrmode * freg
     # Pfldl_m of addrmode
     # Pfstpl_m of addrmode
@@ -214,8 +223,8 @@ op_map = {
     # Pcvtss2sd_ff of freg * freg
     # Pcvttsd2si_rf of ireg * freg
     # Pcvtsi2sd_fr of freg * ireg
-    # Pcvttss2si_rf of ireg * freg
-    # Pcvtsi2ss_fr of freg * ireg
+    "Pcvttss2si_rf" : [0,1], # of ireg * freg
+    "Pcvtsi2ss_fr" : [0,1], # of freg * ireg
     # Pcvttsd2sl_rf of ireg * freg
     # Pcvtsl2sd_fr of freg * ireg
     # Pcvttss2sl_rf of ireg * freg
@@ -224,11 +233,11 @@ op_map = {
     "Pleaq" : [0],    # of ireg * addrmode
     # Pnegl of ireg
     # Pnegq of ireg
-    # Paddl_ri of ireg * Int.int
-    # Paddq_ri of ireg * Int64.int
+    "Paddl_ri" : [0,2], # of ireg * Int.int
+    "Paddq_ri" : [0,2], # of ireg * Int64.int
     "Psubl_rr" : [0,2], # of ireg * ireg
     # Psubq_rr of ireg * ireg
-    # Pimull_rr of ireg * ireg
+    "Pimull_rr" : [0,2], # of ireg * ireg
     # Pimulq_rr of ireg * ireg
     # Pimull_ri of ireg * Int.int
     # Pimulq_ri of ireg * Int64.int
@@ -273,11 +282,11 @@ op_map = {
     # Pshld_ri of ireg * ireg * Int.int
     # Prorl_ri of ireg * Int.int
     # Prorq_ri of ireg * Int.int
-    # Pcmpl_rr of ireg * ireg
+    "Pcmpl_rr" : [0,1], # of ireg * ireg
     # Pcmpq_rr of ireg * ireg
-    # Pcmpl_ri of ireg * Int.int
+    "Pcmpl_ri" : [0,1], # of ireg * Int.int
     # Pcmpq_ri of ireg * Int64.int
-    # Ptestl_rr of ireg * ireg
+    "Ptestl_rr" : [0,1], # of ireg * ireg
     # Ptestq_rr of ireg * ireg
     # Ptestl_ri of ireg * Int.int
     # Ptestq_ri of ireg * Int64.int
@@ -291,24 +300,29 @@ op_map = {
     # Pabsd of freg
     # Pcomisd_ff of freg * freg
     # Pxorpd_f of freg
+    "Padds_ff" : [0,2],
     # Padds_ff of freg * freg
     # Psubs_ff of freg * freg
-    # Pmuls_ff of freg * freg
+    "Pmuls_ff" : [0,2], # of freg * freg
     # Pdivs_ff of freg * freg
     # Pnegs of freg
     # Pabss of freg
     # Pcomiss_ff of freg * freg
     # Pxorps_f of freg
+    "Pjmp_l" : [0],
     # Pjmp_l of label
+    "Pjmp_s" : [],
     # Pjmp_s of ident * signature
     # Pjmp_r of ireg * signature
-    # Pjcc of testcond * label
+    "Pjcc_L" : [0],
+    "Pjcc_GE" : [0], #  of testcond * label
+    "Pjcc_G"  : [0],
     # Pjcc2 of testcond * testcond * label
     # Pjmptbl of ireg * label list
-    # Pcall_s of ident * signature
+    "Pcall_s" : [], # of ident * signature
     "Pcall_r" : [0], # of ireg * signature
-    # Pmov_rm_a of ireg * addrmode
-    # Pmov_mr_a of addrmode * ireg
+    "Pmov_rm_a" : [0,1,2,3,4], # of ireg * addrmode
+    "Pmov_mr_a" : [0,2,1,3,5], # of addrmode * ireg
     # Pmovsd_fm_a of freg * addrmode
     # Pmovsd_mf_a of addrmode * freg
     # Plabel of label
@@ -352,6 +366,6 @@ op_map = {
     # Psbbl_rr of ireg * ireg
     # Psqrtsd of freg * freg
     # Psubl_ri of ireg * Int.int
-    # Psubq_ri of ireg * Int64.int
+    "Psubq_ri" : [0,2], # of ireg * Int64.int
     "Pret" : []
 }

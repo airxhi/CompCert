@@ -501,7 +501,7 @@ let expand_instruction instr =
        (* Allocate frame *)
        let sz' = Z.of_uint sz in
        emit (Psubq_ri (RSP, sz'));
-       (* emit (Pcfi_adjust sz'); *)
+       emit (Pcfi_adjust sz');
        if save_regs >= 0 then begin
          (* Save the registers *)
          emit (Pleaq (R10, linear_addr RSP (Z.of_uint save_regs)));
@@ -520,7 +520,7 @@ let expand_instruction instr =
        (* Allocate frame *)
        let sz' = Z.of_uint sz in
        emit (Psubl_ri (RSP, sz'));
-       (* emit (Pcfi_adjust sz'); *)
+       emit (Pcfi_adjust sz');
        (* Stack chaining *)
        let addr1 = linear_addr RSP (Z.of_uint (sz + 4)) in
        let addr2 = linear_addr RSP ofs_link in

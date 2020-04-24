@@ -806,8 +806,8 @@ module Target(System: SYSTEM):TARGET =
       (* Pseudo-instructions *)
       | Plabel(l) ->
           fprintf oc "%a:\n" label (transl_label l)
-      | Pallocframe(sz, ofs_ra, ofs_link)
-      | Pfreeframe(sz, ofs_ra, ofs_link) -> fprintf oc "[debug]	Pfreeframe\n"; ()
+      | Pallocframe(sz, ofs_ra, ofs_link) -> fprintf oc "\tPallocframe\n"; ()
+      | Pfreeframe(sz, ofs_ra, ofs_link) -> fprintf oc "\tPfreeframe\n"; ()
 	 (* assert false *)
       | Pbuiltin(ef, args, res) ->
           begin match ef with
